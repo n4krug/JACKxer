@@ -1,0 +1,45 @@
+package space.n4krug.JACKxer;
+
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import space.n4krug.JACKxer.control.MidiRouter;
+import space.n4krug.JACKxer.control.ParameterRegistry;
+import space.n4krug.JACKxer.gui.MainWindow;
+import space.n4krug.JACKxer.jackManager.ClientRegistry;
+import space.n4krug.JACKxer.jackManager.Compressor;
+import space.n4krug.JACKxer.jackManager.Gain;
+import space.n4krug.JACKxer.jackManager.WavPlayer;
+import space.n4krug.JACKxer.tools.ChannelConfigLoader;
+import space.n4krug.JACKxer.tools.MidiConfigLoader;
+
+/**
+ * Hello world!
+ *
+ */
+public class App extends Application {
+
+	WavPlayer wp;
+
+	Gain wpGain;
+
+	Compressor compressor;
+
+	@Override
+	public void start(Stage stage) throws Exception {
+		MainWindow mainWin = new MainWindow();
+		ClientRegistry clientRegistry = new ClientRegistry();
+		ParameterRegistry params = new ParameterRegistry();
+		ChannelConfigLoader.load("main.cfg", clientRegistry, params, mainWin);
+		MidiRouter midi = new MidiRouter();
+		MidiConfigLoader.loadAllAvailable(midi, params);
+
+		Scene scene = new Scene(mainWin);
+		stage.setScene(scene);
+		stage.show();
+	}
+
+	public static void main(String[] args) {
+		launch(args);
+	}
+}
