@@ -3,7 +3,6 @@ space/n4krug/JACKxer/tools/StringPair.class
 space/n4krug/JACKxer/gui/CompressorPane.class
 space/n4krug/JACKxer/gui/LevelMeter.class
 space/n4krug/JACKxer/tools/ConfigParser.class
-space/n4krug/JACKxer/App$1.class
 space/n4krug/JACKxer/jackManager/StereoToMono.class
 space/n4krug/JACKxer/gui/ChannelPage.class
 space/n4krug/JACKxer/gui/LevelMeter$Type.class
@@ -21,7 +20,6 @@ space/n4krug/JACKxer/jackManager/Gain.class
 space/n4krug/JACKxer/App.class
 space/n4krug/JACKxer/jackManager/NoiseGen.class
 space/n4krug/JACKxer/tools/NodeSpec.class
-space/n4krug/JACKxer/gui/ChannelStrip$1.class
 space/n4krug/JACKxer/jackManager/ClientRegistry.class
 space/n4krug/JACKxer/jackManager/WavPlayer.class
 space/n4krug/JACKxer/jackManager/NoiseGen$Type.class

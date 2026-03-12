@@ -39,11 +39,12 @@ public class ChannelStrip extends VBox {
 	public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params) throws Exception {
 
 		this.setPadding(new Insets(10));
+		this.getStyleClass().add("channel-strip");
+
 
 		Set<String> allClients = clients.getClientNames();
 		ArrayList<String> chainClients = new ArrayList<>();
 		for (String client : allClients) {
-			//System.out.println("Client: " + client);
 			if (client.startsWith(chainName)) {
 				chainClients.add(client);
 			}
@@ -119,25 +120,18 @@ public class ChannelStrip extends VBox {
 		Button button = new Button("ON");
 
 		button.setPrefSize(60, 60);
-		String baseStyle = "-fx-background-color: red; -fx-background-radius: 8;";
-		button.setStyle(baseStyle);
+		button.getStyleClass().add("on-button");
 
 		ControlParameter<Boolean> on = params.get(lastClient.toString() + ".on");
 		on.addListener(state -> {
 			if (state) {
-				button.setStyle(baseStyle);
+				button.getStyleClass().add("active");
 			} else {
-				button.setStyle(baseStyle + "-fx-background-color: lightgray;");
+				button.getStyleClass().remove("active");
 			}
 		});
 		
-		button.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent e) {
-				on.setNormalized(on.getValue() ? 0 : 1);
-			}
-			
-		});
+		button.setOnAction(_ -> on.setNormalized(on.getValue() ? 0 : 1));
 
 		return button;
 	}
@@ -146,8 +140,8 @@ public class ChannelStrip extends VBox {
 		Button button = new Button("Comp");
 		
 		button.setPrefSize(60, 60);
-		button.setStyle("-fx-background-color: lightgray; -fx-background-radius: 8;");
-		
+		button.getStyleClass().add("comp-button");
+
 		button.setOnAction(e -> {
 
 		    Stage stage = new Stage();

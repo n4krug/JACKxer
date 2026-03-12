@@ -1,0 +1,41 @@
+/* bg1: #313b39 */
+/* bg2: #556965 */
+
+.root {
+  -fx-bg1: #313b39;
+  -fx-bg2: #556965;
+  -fx-bg3: #6e9c93;
+  -fx-bg-active: #4ab570;
+}
+
+.channel-strip {
+  /* -fx-background-color: red; */
+  -fx-background-color: -fx-bg1;
+  -fx-background-radius: 8;
+}
+
+.channel-page {
+  -fx-background-color: -fx-bg2;
+}
+
+.page-nav {
+  -fx-background-color: -fx-bg1;
+}
+
+/* .page-nav-button { */
+/*   -fx-background-color: -fx-bg3; */
+/*   -fx-background-radius: 8; */
+/* } */
+/**/
+/* .page-nav-button.active { */
+/*   -fx-background-color: -fx-bg-active; */
+/* } */
+
+.button {
+  -fx-background-color: -fx-bg3;
+  -fx-background-radius: 8;
+}
+
+.button.active {
+  -fx-background-color: -fx-bg-active;
+}

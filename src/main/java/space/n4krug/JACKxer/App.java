@@ -30,24 +30,22 @@ public class App extends Application {
 
 	@Override
 	public void start(Stage stage) throws Exception {
-		MainWindow mainWin = new MainWindow();
 		ClientRegistry clientRegistry = new ClientRegistry();
 		ParameterRegistry params = new ParameterRegistry();
+		MainWindow mainWin = new MainWindow(params);
 		ChannelConfigLoader.load("main.cfg", clientRegistry, params, mainWin);
 		MidiRouter midi = new MidiRouter();
 		MidiConfigLoader.loadAllAvailable(midi, params);
 
 		Scene scene = new Scene(mainWin);
+		scene.getStylesheets().add("style.css");
 		stage.setScene(scene);
 		stage.show();
 
-		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent t) {
-				Platform.exit();
-				System.exit(0);
-			}
-		});
+		stage.setOnCloseRequest(_ -> {
+            Platform.exit();
+            System.exit(0);
+        });
 
 	}
 

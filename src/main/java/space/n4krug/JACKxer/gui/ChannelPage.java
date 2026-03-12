@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javafx.geometry.Insets;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -18,7 +19,10 @@ public class ChannelPage extends GridPane {
 					   ParameterRegistry params) {
 
 		ColumnConstraints constraints = new ColumnConstraints(100, 100, Double.MAX_VALUE);
-		constraints.setHgrow(Priority.ALWAYS);
+		//constraints.setHgrow(Priority.ALWAYS);
+
+		this.setPadding(new Insets(10));
+		this.setHgap(10);
 
 		int i = 0;
 		for (StringPair chain : chains) {
@@ -26,6 +30,7 @@ public class ChannelPage extends GridPane {
 			try {
 				strip = new ChannelStrip(page + "." + chain.getKey(), clients, params);
 				this.add(strip, i, 0);
+				this.getStyleClass().add("channel-page");
 				this.getColumnConstraints().add(constraints);
 				List<String> chainClients = ConfigParser.getChainNodes(nodes, page + "." + chain.getKey(),
 						Collections.reverseOrder());

@@ -9,42 +9,49 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import space.n4krug.JACKxer.control.ControlParameter;
+import space.n4krug.JACKxer.control.ParameterRegistry;
 
 public class MainWindow extends BorderPane {
 	
 	private final List<Pane> pages = new ArrayList<>();
 	private final HBox pageNav = new HBox(10);
-	private final String buttonStyle = "-fx-background-color: lightgray; -fx-background-radius: 8;";
 
-	public MainWindow() {
+	private final ParameterRegistry params;
+	private final ArrayList<ControlParameter<Boolean>> pageParams = new ArrayList<>();
 
+	public MainWindow(ParameterRegistry params) {
+		this.params = params;
 		this.setBottom(pageNav);
-		this.setPadding(new Insets(10));
+		pageNav.getStyleClass().add("page-nav");
+		pageNav.setPadding(new Insets(10));
 	}
 	
 	public void addPage(Pane page, String name) {
 		int pageId = pages.size();
 		pages.add(page);
-		Button button = new Button(name);
-		button.setStyle(buttonStyle);
-		button.setPadding(new Insets(10, 20, 10, 20));
-		button.setOnAction(e -> {
-			setPage(pageId);
+		pageParams.add(ControlParameter.toggle(false));
+		pageParams.getLast().addListener(on -> {
+			if (on) {
+				for (int i = 0; i < pageParams.size(); i++) {
+					if (i!=pageId) {
+						pageParams.get(i).setNormalized(0);
+					}
+				}
+				this.setCenter(pages.get(pageId));
+				pageNav.getChildren().get(pageId).getStyleClass().add("active");
+			} else {
+				pageNav.getChildren().get(pageId).getStyleClass().remove("active");
+			}
 		});
+		params.register("active-page." + pageId, ControlParameter.toggle(false));
+		Button button = new Button(name);
+		button.getStyleClass().add("page-nav-button");
+		button.setPadding(new Insets(20));
+		button.setOnAction(_ -> pageParams.get(pageId).setNormalized(1));
 		pageNav.getChildren().add(button);
 		if (pageId == 0) {
-			setPage(pageId);
+			pageParams.get(pageId).setNormalized(1);
 		}
-	}
-	
-	public void setPage(int pageId) {
-		if (pageId >= pages.size()) {
-			return;
-		}
-		this.setCenter(pages.get(pageId));
-		for (Node button : pageNav.getChildren()) {
-			button.setStyle(buttonStyle);
-		}
-		pageNav.getChildren().get(pageId).setStyle(buttonStyle + "-fx-background-color: lightgreen;");
 	}
 }
