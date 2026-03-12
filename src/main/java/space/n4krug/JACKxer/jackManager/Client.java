@@ -29,16 +29,15 @@ public abstract class Client implements JackProcessCallback {
 	private final String name;
 
 	private volatile boolean muted = false;
+	private volatile boolean bypassed = false;
 
 	private volatile float peakLevel = 0f;
 	private volatile float rmsLevel = 0f;
 
 	private volatile float prePeakLevel = 0f;
 	private volatile float preRmsLevel = 0f;
-	
-	private final ControlParameter<Boolean> on;
 
-	public String toString() {
+    public String toString() {
 		return name;
 	}
 	
@@ -95,6 +94,29 @@ public abstract class Client implements JackProcessCallback {
 		return buf;
 	}
 
+	@Override
+	public boolean process(JackClient client, int nframes) {
+		FloatBuffer in = getInputs().getFirst().getFloatBuffer();
+		FloatBuffer out = getOutputs().getFirst().getFloatBuffer();
+
+		in = preProcess(in, nframes);
+
+		if (bypassed) {
+			for (int i = 0; i < nframes; i++) {
+				float sample = in.get(i);
+				out.put(i, sample);
+			}
+		} else {
+			out = process(in, nframes);
+		}
+
+		this.postProcess(out, nframes);
+
+		return true;
+	}
+
+	abstract protected FloatBuffer process(FloatBuffer in, int nframes);
+
 	protected void postProcess(FloatBuffer buf, int nframes) {
 		float peak = 0;
 		float sum = 0;
@@ -128,6 +150,10 @@ public abstract class Client implements JackProcessCallback {
 		muted = mute;
 	}
 
+	private void setBypass(boolean bypass) {
+		bypassed = bypass;
+	}
+
 //	private boolean getMuted() {
 //		return muted;
 //	}
@@ -153,13 +179,15 @@ public abstract class Client implements JackProcessCallback {
 
 		client.setProcessCallback(this);
 		client.activate();
-		
-		on = ControlParameter.toggle(!muted);
+
+		ControlParameter<Boolean> bypassedParam = ControlParameter.toggle(bypassed);
+		registry.register(name + ".bypass", bypassedParam);
+		bypassedParam.addListener(state -> setBypass(state));
+
+        ControlParameter<Boolean> on = ControlParameter.toggle(!muted);
 		registry.register(name + ".on", on);
 		on.addListener(state -> setMute(!state));
 	}
-
-	public abstract boolean process(JackClient client2, int nframes);
 
 	public String[] getInputNames() {
 		String[] inputNames = new String[inputs.size()];

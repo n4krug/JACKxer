@@ -1,8 +1,11 @@
 package space.n4krug.JACKxer;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import space.n4krug.JACKxer.control.MidiRouter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
 import space.n4krug.JACKxer.gui.MainWindow;
@@ -37,6 +40,15 @@ public class App extends Application {
 		Scene scene = new Scene(mainWin);
 		stage.setScene(scene);
 		stage.show();
+
+		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+			@Override
+			public void handle(WindowEvent t) {
+				Platform.exit();
+				System.exit(0);
+			}
+		});
+
 	}
 
 	public static void main(String[] args) {

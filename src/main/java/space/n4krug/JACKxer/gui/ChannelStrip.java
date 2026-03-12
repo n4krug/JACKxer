@@ -2,10 +2,12 @@ package space.n4krug.JACKxer.gui;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -31,18 +33,25 @@ public class ChannelStrip extends VBox {
 
 	private Gain gainClient;
 	private Compressor compClient;
-	private Client lastClient;
-	private Client firstClient;
+	private final Client lastClient;
+	private final Client firstClient;
 
-	public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params) {
+	public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params) throws Exception {
+
+		this.setPadding(new Insets(10));
+
 		Set<String> allClients = clients.getClientNames();
 		ArrayList<String> chainClients = new ArrayList<>();
 		for (String client : allClients) {
+			//System.out.println("Client: " + client);
 			if (client.startsWith(chainName)) {
 				chainClients.add(client);
 			}
 		}
-		Collections.sort(chainClients, Collections.reverseOrder());
+		if (chainClients.isEmpty()) {
+			throw new Exception("No clients in chain: " + chainName);
+		}
+		chainClients.sort(Comparator.naturalOrder());
 		
 		for (String client : chainClients) {
 			if (client.endsWith("gain")) {
@@ -52,13 +61,13 @@ public class ChannelStrip extends VBox {
 				compClient = (Compressor) clients.get(client);
 			}
 		}
-		lastClient = clients.get(chainClients.get(0));
-		firstClient = clients.get(chainClients.get(chainClients.size() - 1));
+		lastClient = clients.get(chainClients.getLast());
+		firstClient = clients.get(chainClients.getFirst());
 
 		setSpacing(8);
 		setAlignment(Pos.CENTER);
 
-		Label name = new Label(chainName);
+		Label name = new Label(chainName.substring(chainName.indexOf(".") + 1));
 
 		LevelMeter preMeter = new LevelMeter(firstClient, LevelMeter.Type.PRE);
 		LevelMeter meter = new LevelMeter(lastClient);
@@ -66,6 +75,12 @@ public class ChannelStrip extends VBox {
 
 		HBox meters = new HBox();
 		meters.getChildren().addAll(preMeter, meter, fader);
+		meters.setAlignment(Pos.CENTER);
+
+		for (String clientName : chainClients) {
+			Client client = clients.get(clientName);
+			meters.getChildren().add(new LevelMeter(client, LevelMeter.Type.PRE));
+		}
 		
 
 		Button mute = createMuteButton(params);

@@ -4,13 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.jaudiolibs.jnajack.JackException;
 
@@ -34,35 +29,42 @@ public class ChannelConfigLoader {
 //	private final ParameterRegistry params = new ParameterRegistry();
 
 	public static void load(String file, ClientRegistry registry, ParameterRegistry params, MainWindow mainWin)
-			throws FileNotFoundException, IOException, JackException, EvaluationException, ParseException {
+			throws FileNotFoundException, IOException, EvaluationException, ParseException {
 
 		List<String> allLines = Files.readAllLines(Path.of(CONFIG_LOCATION + file));
 
-
-		Map<String, List<String>> pageMap = ConfigParser.splitPages(allLines);
+		SortedMap<String, List<String>> pageMap = ConfigParser.splitPages(allLines);
 
 		Map<String, Integer> globVars = ConfigParser.parseParams("var", pageMap.get("global"));
 		Map<String, Integer> globCounters = ConfigParser.parseParams("counter", pageMap.get("global"));
 
-		
-		List<StringPair> nodes = new ArrayList<>();
+		//List<StringPair> nodes = new ArrayList<>();
+		Map<String, String> nodes = new HashMap<>();
 		List<StringPair> connections = new ArrayList<>();
 		Map<String, List<StringPair>> chains = new HashMap<>();
-		
+
 		for (Entry<String, List<String>> page : pageMap.entrySet()) {
-			
+
 			List<String> lines = page.getValue();
-			
+
 			Map<String, Integer> vars = new HashMap<>();
 			vars.putAll(globVars);
 			vars.putAll(ConfigParser.parseParams("var", lines));
 			Map<String, Integer> counters = new HashMap<>();
-			vars.putAll(globCounters);
-			vars.putAll(ConfigParser.parseParams("counter", lines));
-			
-			
+			counters.putAll(globCounters);
+			counters.putAll(ConfigParser.parseParams("counter", lines));
+
 			chains.put(page.getKey(), ConfigParser.parseKeyword("chain", vars, counters, lines));
-			nodes.addAll(ConfigParser.parseKeyword("node", vars, counters, lines));
+//			if (!page.getKey().equals("global")) {
+//				List<StringPair> pageNodes = ConfigParser.parseKeyword("node", vars, counters, lines);
+//				for (StringPair node : pageNodes) {
+//					nodes.add(new StringPair(page.getKey() + "." + node.getKey(), node.getValue()));
+//				}
+			List<StringPair> pageNodes = ConfigParser.parseKeyword("node", vars, counters, lines);
+			for (StringPair node : pageNodes) {
+				nodes.put(page.getKey() + "." + node.getKey(), node.getValue());
+			}
+//			}
 			connections.addAll(ConfigParser.parseKeyword("connect", vars, counters, lines));
 
 			/*
@@ -80,9 +82,11 @@ public class ChannelConfigLoader {
 					if (elem.contains("(")) {
 						String type = elem.split("\\(")[0];
 						name = String.format("%s.%s.%s", chain.getKey(), elemId, type);
-						nodes.add(new StringPair(name, elem));
+						nodes.put(page.getKey() + "." + name, elem);
 					}
-
+					if (!name.startsWith("global.")) {
+						name = page.getKey() + "." + name;
+					}
 					elemNames.add(name);
 				}
 
@@ -95,92 +99,78 @@ public class ChannelConfigLoader {
 			}
 
 		}
-		
-		
-			/*
-			 * Create Nodes (Clients)
-			 */
-			for (StringPair node : nodes) {
-				String type = node.getValue();
 
-				Client client = ClientFactory.create(NodeSpec.parseNode(node.getKey(), type, params));
-				registry.register(node.getKey(), client);
-			}
+		/*
+		 * Create Nodes (Clients)
+		 */
+		for (Entry<String, String> node : nodes.entrySet()) {
+			String type = node.getValue();
+			
+			Client client = ClientFactory.create(NodeSpec.parseNode(node.getKey(), type, params));
+			System.out.println("Registering node: " + node.getKey());
+			registry.register(node.getKey(), client);
+		}
 
-			/*
-			 * Create Connections
-			 */
-			for (StringPair connectString : connections) {
-				String[] connect = connectString.getValue().split(" -> ");
+		/*
+		 * Create Connections
+		 */
+		for (StringPair connectString : connections) {
+			String[] connect = connectString.getValue().split(" -> ");
 
-				for (int i = 0; i < connect.length - 1; i++) {
-					String from = connect[i];
-					String to = connect[i + 1];
+			for (int i = 0; i < connect.length - 1; i++) {
+				String from = connect[i];
+				String to = connect[i + 1];
 
-					List<String> fromChain = new ArrayList<>();
-					List<String> toChain = new ArrayList<>();
-					for (String page : chains.keySet()) {
-						for (StringPair chain : chains.get(page)) {
-							if (chain.getKey().startsWith(from)) {
-								for (StringPair node : nodes) {
-									if (node.getKey().startsWith(chain.getKey())) {
-										fromChain.add(node.getKey());
-									}
+				List<String> fromChain = new ArrayList<>();
+				List<String> toChain = new ArrayList<>();
+				for (String page : pageMap.keySet()) {
+					for (StringPair chain : chains.get(page)) {
+						if ((page + "." + chain.getKey()).startsWith(from)) {
+							for (Entry<String, String> node : nodes.entrySet()) {
+								if (node.getKey().startsWith(page + "." + chain.getKey())) {
+									fromChain.add(node.getKey());
 								}
 							}
-							if (chain.getKey().startsWith(to)) {
-								for (StringPair node : nodes) {
-									if (node.getKey().startsWith(chain.getKey())) {
-										toChain.add(node.getKey());
-									}
+						}
+						if ((page + "." + chain.getKey()).startsWith(to)) {
+							for (Entry<String, String> node : nodes.entrySet()) {
+								if (node.getKey().startsWith(page + "." + chain.getKey())) {
+									toChain.add(node.getKey());
 								}
 							}
 						}
 					}
-					Collections.sort(fromChain, Collections.reverseOrder());
-					Collections.sort(toChain);
-					if (fromChain.size() >= 1) {
-						from = fromChain.get(0);
-					}
-					if (toChain.size() >= 1) {
-						to = toChain.get(0);
-					}
-
-					if (!from.contains(":")) {
-						from += ":out";
-					}
-
-					if (!to.contains(":")) {
-						to += ":in";
-					}
-
-					connect(from, to, registry);
 				}
-			}
+				Collections.sort(fromChain);
+				Collections.sort(toChain);
+				if (!fromChain.isEmpty()) {
+					from = fromChain.getLast();
+				}
+				if (!toChain.isEmpty()) {
+					to = toChain.getFirst();
+				}
 
-			/*
-			 * GUI Stuff
-			 */
-			mainWin.addPage(new ChannelPage(chains, nodes, registry, params), page.getKey());
-//		Set<String> allClients = registry.getClientNames();
-//		int i = 0;
-//		for (StringPair chain : chains) {
-//			ChannelStrip strip = new ChannelStrip(chain.getKey(), registry, params);
-//			mainPane.add(strip, i, 0);
-//
-//			// Turn of last nodes in chains
-//			ArrayList<String> chainClients = new ArrayList<>();
-//			for (String client : allClients) {
-//				if (client.startsWith(chain.getKey())) {
-//					chainClients.add(client);
-//				}
-//			}
-//			Collections.sort(chainClients, Collections.reverseOrder());
-//			ControlParameter<Boolean> on = params.get(chainClients.get(0) + ".on");
-//			on.setNormalized(0);
-//
-//			i++;
-//		}
+				if (!from.contains(":")) {
+					from += ":out";
+				}
+
+				if (!to.contains(":")) {
+					to += ":in";
+				}
+
+				connect(from, to, registry);
+			}
+		}
+
+		/*
+		 * GUI Stuff
+		 */
+		for (String page : pageMap.keySet()) {
+			if (page.equals("global")) {
+				continue;
+			}
+			mainWin.addPage(new ChannelPage(page, chains.get(page), nodes, registry, params), page);
+		}
 	}
 
 	private static String resolvePort(String port, ClientRegistry registry) {
@@ -200,7 +190,7 @@ public class ChannelConfigLoader {
 		return port;
 	}
 
-	private static void connect(String from, String to, ClientRegistry registry) throws JackException {
+	private static void connect(String from, String to, ClientRegistry registry) {
 
 		String src = resolvePort(from, registry);
 		String dst = resolvePort(to, registry);
@@ -209,6 +199,10 @@ public class ChannelConfigLoader {
 
 		Client any = registry.getAnyClient();
 
-		any.connect(src, dst);
+		try {
+			any.connect(src, dst);
+		} catch (JackException e) {
+			System.out.println("Can't connect node \"" + src + "\" to \"" + dst + "\"");
+		}
 	}
 }

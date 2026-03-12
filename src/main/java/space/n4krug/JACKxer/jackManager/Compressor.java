@@ -107,13 +107,10 @@ public class Compressor extends Client {
 	}
 	
 	@Override
-    public boolean process(JackClient client, int nframes) {
+    public FloatBuffer process(FloatBuffer in, int nframes) {
 
-        FloatBuffer in = in(0).getFloatBuffer();
-        FloatBuffer out = out(0).getFloatBuffer();
+        FloatBuffer out = in.duplicate();
 
-        in = preProcess(in, nframes);
-        
         for (int i = 0; i < nframes; i++) {
 
             float sample = in.get(i);
@@ -147,8 +144,6 @@ public class Compressor extends Client {
             out.put(i, y);
         }
 
-        postProcess(out, nframes);
-
-        return true;
+        return out;
     }
 }

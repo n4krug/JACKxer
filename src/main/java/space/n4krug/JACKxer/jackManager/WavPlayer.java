@@ -31,18 +31,27 @@ public class WavPlayer extends Client {
 		out = preProcess(out, nframes);
 
 		for (int i = 0; i < nframes; i++) {
-			out.put(i, audio[position]);
+			if (audio != null) {
+				out.put(i, audio[position]);
 
-			position++;
+				position++;
 
-			if (position >= audio.length) {
-				position = 0;
+				if (position >= audio.length) {
+					position = 0;
+				}
+			} else {
+				out.put(i, 0);
 			}
 		}
 
 		this.postProcess(out, nframes);
 		
 		return true;
+	}
+
+	@Override
+	protected FloatBuffer process(FloatBuffer in, int nframes) {
+		return null;
 	}
 
 	public void loadWav(String file) throws UnsupportedAudioFileException, IOException {

@@ -1,11 +1,6 @@
 package space.n4krug.JACKxer.tools;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import com.ezylang.evalex.EvaluationException;
@@ -32,7 +27,7 @@ public class ConfigParser {
 				continue;
 			}
 
-			String[] keyVal = line.substring(splitIndex + 1, line.length()).split(" = ");
+			String[] keyVal = line.substring(splitIndex + 1).split(" = ");
 
 			if (keyVal.length <= 1) {
 				continue;
@@ -63,7 +58,7 @@ public class ConfigParser {
 				continue;
 			}
 
-			String val = line.substring(splitIndex, line.length());
+			String val = line.substring(splitIndex);
 
 			List<String> formattedLine = format(val, vars, counters, new HashMap<>());
 
@@ -154,22 +149,22 @@ public class ConfigParser {
 		return results;
 	}
 
-	public static List<String> getChainNodes(List<StringPair> nodes, String chainName, Comparator<String> order) {
+	public static List<String> getChainNodes(Map<String, String> nodes, String chainName, Comparator<String> order) {
 		List<String> chainNodes = new ArrayList<>();
-		for (StringPair node : nodes) {
+		for (Entry<String, String> node : nodes.entrySet()) {
 			if (node.getKey().startsWith(chainName)) {
 				chainNodes.add(node.getKey());
 			}
 		}
-		Collections.sort(chainNodes, order);
+		chainNodes.sort(order);
 		return chainNodes;
 	}
 
-	public static List<String> getChainNodes(List<StringPair> nodes, String chainName) {
-		return getChainNodes(nodes, chainName, Comparator.naturalOrder());
-	}
+	//public static List<String> getChainNodes(Map<String, String> nodes, String chainName) {
+	//	return getChainNodes(nodes, chainName, Comparator.naturalOrder());
+	//}
 
-	public static Map<String, List<String>> splitPages(List<String> lines) throws EvaluationException, ParseException {
+	public static SortedMap<String, List<String>> splitPages(List<String> lines) throws EvaluationException, ParseException {
 		List<String> globalLines = new ArrayList<>();
 		for (String line : lines) {
 			if (line.startsWith("[")) {
@@ -179,30 +174,31 @@ public class ConfigParser {
 		}
 		Map<String, Integer> globCounters = parseParams("counter", globalLines);
 		Map<String, Integer> globVars = parseParams("var", globalLines);
-		Map<String, List<String>> out = new HashMap<>();
+		SortedMap<String, List<String>> out = new TreeMap<>();
 
 		List<String> pageNames = new ArrayList<>();
 		pageNames.add("global");
+		out.put("global", new ArrayList<>());
 		for (String line : lines) {
 			if (line.isBlank() || line.startsWith("#")) {
 				continue;
 			}
 			if (line.startsWith("[")) {
 				String unParsedPageName = line.split("\\[")[1];
-				unParsedPageName = unParsedPageName.split("\\]")[0];
+				unParsedPageName = unParsedPageName.split("]")[0];
 				unParsedPageName = unParsedPageName.strip();
-				
+
 				pageNames = format(unParsedPageName, globVars, globCounters, new HashMap<>());
 				for (String pageName : pageNames) {
 					out.put(pageName, new ArrayList<>());
 				}
 				continue;
 			}
-				for (String pageName : pageNames) {
-					out.get(pageName).add(line);
-				}
+			for (String pageName : pageNames) {
+				out.get(pageName).add(line);
+			}
 		}
-		
+
 		return out;
 	}
 }

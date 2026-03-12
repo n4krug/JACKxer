@@ -24,20 +24,15 @@ public class Gain extends Client {
 	}
 
 	@Override
-	public boolean process(JackClient client2, int nframes) {
-		FloatBuffer in = getInputs().get(0).getFloatBuffer();
-		FloatBuffer out = getOutputs().get(0).getFloatBuffer();
+	public FloatBuffer process(FloatBuffer in, int nframes) {
+		FloatBuffer out = in.duplicate();
 
-        in = preProcess(in, nframes);
-        
 		for (int i = 0; i < nframes; i++) {
 			float sample = in.get(i);
 			out.put(i, sample * gain);
 		}
 
-		this.postProcess(out, nframes);
-
-		return true;
+		return out;
 	}
 
 	private void setGaindB(float dB) {

@@ -25,13 +25,18 @@ public class StereoToMono extends Client {
         
 		for (int i = 0; i < nframes; i++) {
 			float sample1 = in1.get(i);
-			float sample2 = in1.get(i);
+			float sample2 = in2.get(i);
 			out.put(i, (sample1 + sample2) / 2 );
 		}
 
 		this.postProcess(out, nframes);
 
 		return true;
+	}
+
+	@Override
+	protected FloatBuffer process(FloatBuffer in, int nframes) {
+		return null;
 	}
 
 }
