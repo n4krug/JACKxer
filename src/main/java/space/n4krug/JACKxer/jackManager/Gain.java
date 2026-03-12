@@ -19,20 +19,18 @@ public class Gain extends Client {
 		super(name, new String[] { "in" }, new String[] { "out" }, registry);
 		gainParam = ControlParameter.range(-60, 6, -60);
 		setGaindB(gainParam.getValue());
-		gainParam.addListener(dB -> setGaindB(dB));
+		gainParam.addListener(this::setGaindB);
 		registry.register(name + ".gain", gainParam);
 	}
 
 	@Override
-	public FloatBuffer process(FloatBuffer in, int nframes) {
-		FloatBuffer out = in.duplicate();
+	public void processAudio(FloatBuffer[] inBufs, FloatBuffer[] outBufs, int nframes) {
+		FloatBuffer in = inBufs[0];
+		FloatBuffer out = outBufs[0];
 
 		for (int i = 0; i < nframes; i++) {
-			float sample = in.get(i);
-			out.put(i, sample * gain);
+			out.put(i, in.get(i) * gain);
 		}
-
-		return out;
 	}
 
 	private void setGaindB(float dB) {

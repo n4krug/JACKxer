@@ -25,11 +25,9 @@ public class WavPlayer extends Client {
 		loadWav(filename);
 	}
 
-	public boolean process(JackClient client2, int nframes) {
-		FloatBuffer out = getOutputs().get(0).getFloatBuffer();
+	public void processAudio(FloatBuffer[] inBufs,  FloatBuffer[] outBufs, int nframes) {
+		FloatBuffer out = outBufs[0];
 		
-		out = preProcess(out, nframes);
-
 		for (int i = 0; i < nframes; i++) {
 			if (audio != null) {
 				out.put(i, audio[position]);
@@ -43,15 +41,6 @@ public class WavPlayer extends Client {
 				out.put(i, 0);
 			}
 		}
-
-		this.postProcess(out, nframes);
-		
-		return true;
-	}
-
-	@Override
-	protected FloatBuffer process(FloatBuffer in, int nframes) {
-		return null;
 	}
 
 	public void loadWav(String file) throws UnsupportedAudioFileException, IOException {

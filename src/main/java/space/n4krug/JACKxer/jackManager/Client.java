@@ -96,26 +96,53 @@ public abstract class Client implements JackProcessCallback {
 
 	@Override
 	public boolean process(JackClient client, int nframes) {
-		FloatBuffer in = getInputs().getFirst().getFloatBuffer();
-		FloatBuffer out = getOutputs().getFirst().getFloatBuffer();
+		FloatBuffer[] inBufs = new FloatBuffer[inputs.size()];
+		FloatBuffer[] outBufs = new FloatBuffer[outputs.size()];
 
-		in = preProcess(in, nframes);
-
-		if (bypassed) {
-			for (int i = 0; i < nframes; i++) {
-				float sample = in.get(i);
-				out.put(i, sample);
-			}
-		} else {
-			out.put(process(in, nframes));
+		for (int i = 0; i < inputs.size(); i++) {
+			inBufs[i] = inputs.get(i).getFloatBuffer();
+			preProcess(inBufs[i], nframes);
 		}
 
-		this.postProcess(out, nframes);
+		for (int i = 0; i < outputs.size(); i++) {
+			outBufs[i] = outputs.get(i).getFloatBuffer();
+		}
+
+		if (muted) {
+
+			for (FloatBuffer out : outBufs) {
+				for (int i = 0; i < nframes; i++) {
+					out.put(i, 0f);
+				}
+			}
+
+		} else if (bypassed) {
+
+			int n = Math.min(inBufs.length, outBufs.length);
+
+			for (int ch = 0; ch < n; ch++) {
+				FloatBuffer in = inBufs[ch];
+				FloatBuffer out = outBufs[ch];
+
+				for (int i = 0; i < nframes; i++) {
+					out.put(i, in.get(i));
+				}
+			}
+
+		} else {
+
+			processAudio(inBufs, outBufs, nframes);
+
+		}
+
+		for (FloatBuffer out : outBufs) {
+			postProcess(out, nframes);
+		}
 
 		return true;
 	}
 
-	abstract protected FloatBuffer process(FloatBuffer in, int nframes);
+	abstract protected void processAudio(FloatBuffer[] in, FloatBuffer[] out, int nframes);
 
 	protected void postProcess(FloatBuffer buf, int nframes) {
 		float peak = 0;

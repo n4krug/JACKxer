@@ -23,11 +23,9 @@ public class NoiseGen extends Client {
 	}
 
 	@Override
-	public boolean process(JackClient client2, int nframes) {
-		FloatBuffer out = getOutputs().getFirst().getFloatBuffer();
+	public void processAudio(FloatBuffer[] inBufs, FloatBuffer[] outBufs, int nframes) {
+		FloatBuffer out = outBufs[0];
 
-		out = preProcess(out, nframes);
-		
 		for (int i = 0; i < nframes; i++) {
 			switch (type) {
 			case WHITE:
@@ -38,15 +36,6 @@ public class NoiseGen extends Client {
 				break;
 			}
 		}
-
-		this.postProcess(out, nframes);
-		
-		return true;
-	}
-
-	@Override
-	protected FloatBuffer process(FloatBuffer in, int nframes) {
-		return null;
 	}
 
 	private int rng = 0x12345678;

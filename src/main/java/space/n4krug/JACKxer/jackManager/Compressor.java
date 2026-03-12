@@ -107,9 +107,9 @@ public class Compressor extends Client {
 	}
 	
 	@Override
-    public FloatBuffer process(FloatBuffer in, int nframes) {
-
-        FloatBuffer out = in.duplicate();
+    public void processAudio(FloatBuffer[] inBufs, FloatBuffer[] outBufs, int nframes) {
+        FloatBuffer in = inBufs[0];
+        FloatBuffer out = outBufs[0];
 
         for (int i = 0; i < nframes; i++) {
 
@@ -143,7 +143,5 @@ public class Compressor extends Client {
             
             out.put(i, y);
         }
-
-        return out;
     }
 }
