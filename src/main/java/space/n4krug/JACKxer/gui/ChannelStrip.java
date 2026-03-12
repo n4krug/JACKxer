@@ -77,12 +77,6 @@ public class ChannelStrip extends VBox {
 		meters.getChildren().addAll(preMeter, meter, fader);
 		meters.setAlignment(Pos.CENTER);
 
-		for (String clientName : chainClients) {
-			Client client = clients.get(clientName);
-			meters.getChildren().add(new LevelMeter(client, LevelMeter.Type.PRE));
-		}
-		
-
 		Button mute = createMuteButton(params);
 		
 		getChildren().addAll(name, meters, mute);

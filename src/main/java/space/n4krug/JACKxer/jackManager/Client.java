@@ -107,7 +107,7 @@ public abstract class Client implements JackProcessCallback {
 				out.put(i, sample);
 			}
 		} else {
-			out = process(in, nframes);
+			out.put(process(in, nframes));
 		}
 
 		this.postProcess(out, nframes);
