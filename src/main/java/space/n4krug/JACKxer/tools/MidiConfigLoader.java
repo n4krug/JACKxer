@@ -51,7 +51,7 @@ public class MidiConfigLoader {
 		
 		for (StringPair control : controls) {
 			
-			System.out.println("Mapping: " + control);
+			System.out.println("Mapping " + control.getKey() + " to " + control.getValue());
 
 			if (!control.getKey().startsWith("ch") || !control.getKey().contains("cc")) {
 				continue;
@@ -67,7 +67,7 @@ public class MidiConfigLoader {
 			ControlParameter p = registry.get(paramName);
 
 			if (p != null) {
-				router.mapCC(deviceInfo.getName(), channel, cc, p);
+				router.map(deviceInfo.getName(), "ch" + channel + ".cc" + cc, p);
 			}
 		}
 	}

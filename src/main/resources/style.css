@@ -1,6 +1,3 @@
-/* bg1: #313b39 */
-/* bg2: #556965 */
-
 .root {
   -fx-bg1: #313b39;
   -fx-bg2: #556965;
@@ -38,4 +35,8 @@
 
 .button.active {
   -fx-background-color: -fx-bg-active;
+}
+
+.eq-pane {
+  -fx-background-color: -fx-bg1;
 }

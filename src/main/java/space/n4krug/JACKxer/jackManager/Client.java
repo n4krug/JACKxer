@@ -37,6 +37,11 @@ public abstract class Client implements JackProcessCallback {
 	private volatile float prePeakLevel = 0f;
 	private volatile float preRmsLevel = 0f;
 
+	private static final int FFT_BUFFER_SIZE = 4096;
+
+	private final float[] fftBuffer = new float[FFT_BUFFER_SIZE];
+	private volatile int fftWritePos = 0;
+
     public String toString() {
 		return name;
 	}
@@ -108,15 +113,7 @@ public abstract class Client implements JackProcessCallback {
 			outBufs[i] = outputs.get(i).getFloatBuffer();
 		}
 
-		if (muted) {
-
-			for (FloatBuffer out : outBufs) {
-				for (int i = 0; i < nframes; i++) {
-					out.put(i, 0f);
-				}
-			}
-
-		} else if (bypassed) {
+		 if (bypassed) {
 
 			int n = Math.min(inBufs.length, outBufs.length);
 
@@ -160,17 +157,29 @@ public abstract class Client implements JackProcessCallback {
 			sum += sample * sample;
 		}
 
+		if (buf != null) {
+			for (int i = 0; i < nframes; i++) {
+
+				float s = buf.get(i);
+
+				fftBuffer[fftWritePos++] = s;
+
+				if (fftWritePos >= fftBuffer.length)
+					fftWritePos = 0;
+			}
+		}
+
 		peakLevel = Math.max(peak, peakLevel * 0.95f);
 		rmsLevel = (nframes > 0) ? (float) Math.sqrt(sum / nframes) : 0f;
 
 		if (muted) {
-//			for (int i = 0; i < getOutputs().size(); i++) {
-//				FloatBuffer out = getOutputs().get(i).getFloatBuffer();
-			for (int j = 0; j < nframes; j++) {
-				buf.put(j, 0);
+
+			for (int i = 0; i < nframes; i++) {
+				buf.put(i, 0f);
 			}
+
 		}
-//		}
+
 	}
 
 	private void setMute(boolean mute) {
@@ -179,6 +188,23 @@ public abstract class Client implements JackProcessCallback {
 
 	private void setBypass(boolean bypass) {
 		bypassed = bypass;
+	}
+
+	public void copyFFT(float[] dest) {
+
+		int pos = fftWritePos;
+
+		int len = dest.length;
+
+		for (int i = 0; i < len; i++) {
+
+			int idx = pos - len + i;
+
+			if (idx < 0)
+				idx += FFT_BUFFER_SIZE;
+
+			dest[i] = fftBuffer[idx];
+		}
 	}
 
 //	private boolean getMuted() {

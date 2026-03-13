@@ -3,6 +3,7 @@ package space.n4krug.JACKxer.jackManager;
 import java.util.HashMap;
 import java.util.function.Function;
 
+import org.jaudiolibs.jnajack.Jack;
 import space.n4krug.JACKxer.tools.NodeSpec;
 
 public class ClientFactory {
@@ -46,6 +47,26 @@ public class ClientFactory {
 		factories.put("stereoToMono", node -> {
 			try {
 				return new StereoToMono(node.name, node.registry);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+
+		factories.put("eq", node -> {
+			try {
+				int bandCount = 4;
+
+				if (node.args.length > 0) {
+					bandCount = Integer.parseInt(node.args[0]);
+				}
+
+				Biquad.Type[] bands = new Biquad.Type[bandCount];
+
+				for (int i = 0; i < bandCount; i++) {
+					bands[i] = Biquad.Type.PEAK;
+				}
+
+				return new ParametricEQ(node.name, node.registry, bands);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

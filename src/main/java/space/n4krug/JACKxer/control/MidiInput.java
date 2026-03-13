@@ -18,15 +18,30 @@ public class MidiInput implements Receiver {
 	public void send(MidiMessage message, long timeStamp) {
 
 		if (message instanceof ShortMessage sm) {
+			System.out.println(sm.getChannel() + " : " + sm.getData1() + " : " + sm.getData2());
 
 			if (sm.getCommand() == ShortMessage.CONTROL_CHANGE) {
 
-				int channel = sm.getChannel();
-				int cc = sm.getData1();
-				int value = sm.getData2();
-				
-				router.handleCC(device, channel, cc, value / 127f);
+				String id = "ch" + sm.getChannel() + ".cc" + sm.getData1();
+
+				float value = sm.getData2() / 127f;
+
+				System.out.println("Sending: " + id + ", " + value);
+
+				router.handle(new ControlEvent(
+						device,
+						id,
+						ControlEvent.Type.ABSOLUTE,
+						value
+				));
 			}
+		//	if (sm.getCommand() == ShortMessage.PROGRAM_CHANGE) {
+
+		//		int program = sm.getChannel();
+		//		int value = sm.getData1();
+
+		//		router.handleProgram(device, program, value);
+		//	}
 		}
 	}
 

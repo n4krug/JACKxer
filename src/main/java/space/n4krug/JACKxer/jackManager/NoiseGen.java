@@ -46,7 +46,7 @@ public class NoiseGen extends Client {
 		rng ^= (rng >>> 17);
 		rng ^= (rng << 5);
 
-		return rng * (1.0f / 2147483648.0f);
+		return rng * (0.35f / 2147483648.0f);
 	}
 
 	private double b0, b1, b2, b3, b4, b5, b6;

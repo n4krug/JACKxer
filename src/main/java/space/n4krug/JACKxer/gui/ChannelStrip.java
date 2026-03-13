@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -21,10 +22,7 @@ import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
 //import javafx.event.ActionEvent;
 //import javafx.event.EventHandler;
-import space.n4krug.JACKxer.jackManager.Client;
-import space.n4krug.JACKxer.jackManager.ClientRegistry;
-import space.n4krug.JACKxer.jackManager.Compressor;
-import space.n4krug.JACKxer.jackManager.Gain;
+import space.n4krug.JACKxer.jackManager.*;
 
 public class ChannelStrip extends VBox {
 
@@ -33,6 +31,7 @@ public class ChannelStrip extends VBox {
 
 	private Gain gainClient;
 	private Compressor compClient;
+	private ParametricEQ eqClient;
 	private final Client lastClient;
 	private final Client firstClient;
 
@@ -61,6 +60,9 @@ public class ChannelStrip extends VBox {
 			if (client.endsWith("compressor")) {
 				compClient = (Compressor) clients.get(client);
 			}
+			if (client.endsWith("eq")) {
+				eqClient = (ParametricEQ) clients.get(client);
+			}
 		}
 		lastClient = clients.get(chainClients.getLast());
 		firstClient = clients.get(chainClients.getFirst());
@@ -79,12 +81,19 @@ public class ChannelStrip extends VBox {
 		meters.setAlignment(Pos.CENTER);
 
 		Button mute = createMuteButton(params);
-		
-		getChildren().addAll(name, meters, mute);
+
+		FFTGraph visGraph = new FFTGraph(lastClient, new Dimension2D(60, 60), 32);
+
+		getChildren().addAll(name, meters, visGraph, mute);
 
 		if (compClient != null) {
 			Button comp = createCompButton(params);
 			getChildren().add(comp);
+		}
+
+		if (eqClient != null) {
+			Button eq = createEQButton(params);
+			getChildren().add(eq);
 		}
 	}
 
@@ -149,11 +158,35 @@ public class ChannelStrip extends VBox {
 		    CompressorPane pane =
 		        new CompressorPane(compClient, params);
 
-		    stage.setScene(new Scene(pane));
+			Scene scene = new Scene(pane);
+			stage.setScene(scene);
 		    stage.setTitle("Compressor");
 		    stage.show();
+			scene.getStylesheets().add("style.css");
 		});
 		
+		return button;
+	}
+
+	private Button createEQButton(ParameterRegistry params) {
+		Button button = new Button("EQ");
+
+		button.setPrefSize(60, 60);
+		button.getStyleClass().add("comp-button");
+
+		button.setOnAction(e -> {
+
+			Stage stage = new Stage();
+
+			EQPane pane = new EQPane(eqClient, params);
+
+			Scene scene = new Scene(pane);
+			stage.setScene(scene);
+			stage.setTitle("EQ");
+			stage.show();
+			scene.getStylesheets().add("style.css");
+		});
+
 		return button;
 	}
 

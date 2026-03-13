@@ -3,19 +3,36 @@ package space.n4krug.JACKxer.control;
 import java.util.HashMap;
 
 public class MidiRouter {
-    private record CCKey(String controller, int channel, int cc) {}
-	private final HashMap<CCKey, ControlParameter> ccMap = new HashMap<>();
 
-	public void mapCC(String controller, int channel, int cc, ControlParameter param) {
-		ccMap.put(new CCKey(controller, channel, cc), param);
+	private record Key(String controller, String id) {}
+
+	private final HashMap<Key, ControlParameter<?>> map = new HashMap<>();
+
+	public void map(String controller, String id, ControlParameter<?> param) {
+		map.put(new Key(controller, id), param);
 	}
 
-	public void handleCC(String controller, int channel, int cc, float normalized) {
+	public void handle(ControlEvent e) {
 
-		ControlParameter p = ccMap.get(new CCKey(controller, channel, cc));
+		ControlParameter<?> p = map.get(new Key(e.controller, e.id));
 
-		if (p != null) {
-			p.setNormalized(normalized);
+		System.out.println(p);
+
+		if (p == null) return;
+
+		if (e.type == ControlEvent.Type.ABSOLUTE) {
+
+			p.setNormalized(e.value);
+
+		} else if (e.type == ControlEvent.Type.RELATIVE) {
+
+			float newVal = p.getNormalized() + e.value * 0.01f;
+			p.setNormalized(newVal);
+
+		} else if (e.type == ControlEvent.Type.BUTTON) {
+
+			p.setNormalized(e.value);
+
 		}
 	}
 }
