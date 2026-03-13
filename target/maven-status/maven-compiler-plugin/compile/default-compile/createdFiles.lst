@@ -17,8 +17,10 @@ space/n4krug/JACKxer/gui/LevelMeter$1.class
 space/n4krug/JACKxer/control/MidiInput.class
 space/n4krug/JACKxer/jackManager/ClientFactory.class
 space/n4krug/JACKxer/gui/EQNode.class
+space/n4krug/JACKxer/gui/PreviewWindow.class
 space/n4krug/JACKxer/control/MidiRouter.class
 space/n4krug/JACKxer/jackManager/Client.class
+space/n4krug/JACKxer/gui/ChannelPreview.class
 space/n4krug/JACKxer/control/ParameterSelection.class
 space/n4krug/JACKxer/gui/ChannelStrip.class
 space/n4krug/JACKxer/gui/MainWindow.class

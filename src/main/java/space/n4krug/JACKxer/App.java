@@ -9,6 +9,7 @@ import javafx.stage.WindowEvent;
 import space.n4krug.JACKxer.control.MidiRouter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
 import space.n4krug.JACKxer.gui.MainWindow;
+import space.n4krug.JACKxer.gui.PreviewWindow;
 import space.n4krug.JACKxer.jackManager.ClientRegistry;
 import space.n4krug.JACKxer.jackManager.Compressor;
 import space.n4krug.JACKxer.jackManager.Gain;
@@ -33,7 +34,8 @@ public class App extends Application {
 		ClientRegistry clientRegistry = new ClientRegistry();
 		ParameterRegistry params = new ParameterRegistry();
 		MainWindow mainWin = new MainWindow(params);
-		ChannelConfigLoader.load("main.cfg", clientRegistry, params, mainWin);
+		PreviewWindow prevWin = new PreviewWindow(params);
+		ChannelConfigLoader.load("main.cfg", clientRegistry, params, mainWin, prevWin);
 		MidiRouter midi = new MidiRouter();
 		MidiConfigLoader.loadAllAvailable(midi, params);
 
@@ -41,6 +43,12 @@ public class App extends Application {
 		scene.getStylesheets().add("style.css");
 		stage.setScene(scene);
 		stage.show();
+
+		Scene previewScene = new Scene(prevWin);
+		previewScene.getStylesheets().add("style.css");
+		Stage previewStage = new Stage();
+		previewStage.setScene(previewScene);
+		previewStage.show();
 
 		stage.setOnCloseRequest(_ -> {
             Platform.exit();

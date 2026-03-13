@@ -18,7 +18,7 @@ public class MainWindow extends BorderPane {
 	private final HBox pageNav = new HBox(10);
 
 	private final ParameterRegistry params;
-	private final ArrayList<ControlParameter<Boolean>> pageParams = new ArrayList<>();
+	//private final ArrayList<ControlParameter<Boolean>> pageParams = new ArrayList<>();
 
 	public MainWindow(ParameterRegistry params) {
 		this.params = params;
@@ -30,12 +30,13 @@ public class MainWindow extends BorderPane {
 	public void addPage(Pane page, String name) {
 		int pageId = pages.size();
 		pages.add(page);
-		pageParams.add(ControlParameter.toggle(false));
-		pageParams.getLast().addListener(on -> {
+		ControlParameter<Boolean> pageParam =  ControlParameter.toggle(false);
+		pageParam.addListener(on -> {
+			System.out.println(on);
 			if (on) {
-				for (int i = 0; i < pageParams.size(); i++) {
+				for (int i = 0; i < pages.size(); i++) {
 					if (i!=pageId) {
-						pageParams.get(i).setNormalized(0);
+						params.get("active-page." + i).setNormalized(0);
 					}
 				}
 				this.setCenter(pages.get(pageId));
@@ -44,14 +45,11 @@ public class MainWindow extends BorderPane {
 				pageNav.getChildren().get(pageId).getStyleClass().remove("active");
 			}
 		});
-		params.register("active-page." + pageId, ControlParameter.toggle(false));
+		params.register("active-page." + pageId, pageParam);
 		Button button = new Button(name);
 		button.getStyleClass().add("page-nav-button");
 		button.setPadding(new Insets(20));
-		button.setOnAction(_ -> pageParams.get(pageId).setNormalized(1));
+		button.setOnAction(_ -> params.get("active-page." + pageId).setNormalized(1));
 		pageNav.getChildren().add(button);
-		if (pageId == 0) {
-			pageParams.get(pageId).setNormalized(1);
-		}
 	}
 }

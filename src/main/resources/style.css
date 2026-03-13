@@ -2,16 +2,23 @@
   -fx-bg1: #313b39;
   -fx-bg2: #556965;
   -fx-bg3: #6e9c93;
-  -fx-bg-active: #4ab570;
+  -fx-bg-active: #b0d4cc;
+
+  -fx-fg1: #85d4c4;
 }
 
-.channel-strip {
+.channel-strip, .channel-preview {
   /* -fx-background-color: red; */
   -fx-background-color: -fx-bg1;
   -fx-background-radius: 8;
 }
 
-.channel-page {
+.channel-strip .label,
+.channel-preview .label {
+  -fx-text-background-color: -fx-fg1;
+}
+
+.channel-page, .preview-page {
   -fx-background-color: -fx-bg2;
 }
 

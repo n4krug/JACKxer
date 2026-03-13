@@ -10,15 +10,10 @@ import java.util.Map.Entry;
 import org.jaudiolibs.jnajack.JackException;
 
 import com.ezylang.evalex.EvaluationException;
-import com.ezylang.evalex.Expression;
 import com.ezylang.evalex.parser.ParseException;
 
-import javafx.scene.layout.GridPane;
-import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
-import space.n4krug.JACKxer.gui.ChannelPage;
-import space.n4krug.JACKxer.gui.ChannelStrip;
-import space.n4krug.JACKxer.gui.MainWindow;
+import space.n4krug.JACKxer.gui.*;
 import space.n4krug.JACKxer.jackManager.Client;
 import space.n4krug.JACKxer.jackManager.ClientFactory;
 import space.n4krug.JACKxer.jackManager.ClientRegistry;
@@ -28,7 +23,7 @@ public class ChannelConfigLoader {
 
 //	private final ParameterRegistry params = new ParameterRegistry();
 
-	public static void load(String file, ClientRegistry registry, ParameterRegistry params, MainWindow mainWin)
+	public static void load(String file, ClientRegistry registry, ParameterRegistry params, MainWindow mainWin, PreviewWindow prevWin)
 			throws FileNotFoundException, IOException, EvaluationException, ParseException {
 
 		List<String> allLines = Files.readAllLines(Path.of(CONFIG_LOCATION + file));
@@ -170,7 +165,11 @@ public class ChannelConfigLoader {
 				continue;
 			}
 			mainWin.addPage(new ChannelPage(page, chains.get(page), nodes, registry, params), page);
+			if (prevWin != null) {
+				prevWin.addPage(ChannelPreview.createChannelPreviews(page, chains.get(page), registry, params), page);
+			}
 		}
+		params.get("active-page.0").setNormalized(1);
 	}
 
 	private static String resolvePort(String port, ClientRegistry registry) {

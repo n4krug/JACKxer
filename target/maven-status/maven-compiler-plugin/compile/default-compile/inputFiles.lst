@@ -8,6 +8,7 @@
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/control/ParameterSelection.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/control/SelectedParameter.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/ChannelPage.java
+/home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/ChannelPreview.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/ChannelStrip.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/CompressorPane.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/EQGraph.java
@@ -17,6 +18,7 @@
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/FFTGraph.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/LevelMeter.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/MainWindow.java
+/home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/gui/PreviewWindow.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/jackManager/Biquad.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/jackManager/Client.java
 /home/n4krug/IdeaProjects/JACKxer/src/main/java/space/n4krug/JACKxer/jackManager/ClientFactory.java
