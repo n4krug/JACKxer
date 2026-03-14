@@ -9,35 +9,63 @@ public class ControlParameter<T> {
 
 	private final ParameterMapper<T> mapper;
 	
-	private final ArrayList<Consumer<T>> listeners = new ArrayList<>();
+	private final ArrayList<Consumer<T>> fxListeners = new ArrayList<>();
+	private final ArrayList<Consumer<T>> directListeners = new ArrayList<>();
     private final ArrayList<Consumer<Boolean>> selectionListeners = new ArrayList<>();
 
 	private T value;
     private float normalized;
 
-	public ControlParameter(ParameterMapper<T> mapper, T baseValue) {
+	public ControlParameter(ParameterMapper<T> mapper, float normalizedStart) {
 		this.mapper = mapper;
-		value = baseValue;
-        normalized = 0;
+        setNormalizedInternal(normalizedStart, false);
 	}
 	
 	public void addListener(Consumer<T> listener) {
-		listeners.add(listener);
+		fxListeners.add(listener);
 	}
 	
+    public void addDirectListener(Consumer<T> listener) {
+        directListeners.add(listener);
+    }
+
     public void setNormalized(float v) {
 
-        normalized = Math.max(0, Math.min(1, v));
+        setNormalizedInternal(v, true);
+    }
 
+    private void setNormalizedInternal(float v, boolean notify) {
+        float nextNormalized = Math.max(0, Math.min(1, v));
+        if (notify && Math.abs(nextNormalized - normalized) < 1e-6f) {
+            return;
+        }
+
+        normalized = nextNormalized;
         value = mapper.map(normalized);
 
-        for (Consumer<T> listener : listeners) {
+        if (!notify) {
+            return;
+        }
 
-            if (Platform.isFxApplicationThread()) {
+        for (Consumer<T> listener : directListeners) {
+            listener.accept(value);
+        }
+
+        if (fxListeners.isEmpty()) {
+            return;
+        }
+
+        if (Platform.isFxApplicationThread()) {
+            for (Consumer<T> listener : fxListeners) {
                 listener.accept(value);
-            } else {
-                Platform.runLater(() -> listener.accept(value));
             }
+        } else {
+            final T valueSnapshot = value;
+            Platform.runLater(() -> {
+                for (Consumer<T> listener : fxListeners) {
+                    listener.accept(valueSnapshot);
+                }
+            });
         }
     }
 
@@ -56,10 +84,12 @@ public class ControlParameter<T> {
     public float getNormalized() { return normalized; }
     
     public static ControlParameter<Float> range(float min, float max, float start) {
-    	return new ControlParameter<>(v -> min + v * (max - min), start);
+        float denom = (max - min);
+        float startNorm = denom == 0 ? 0f : (start - min) / denom;
+    	return new ControlParameter<>(v -> min + v * (max - min), startNorm);
     }
     
     public static ControlParameter<Boolean> toggle(boolean start) {
-    	return new ControlParameter<>(v -> v > 0.5f, start);
+    	return new ControlParameter<>(v -> v > 0.5f, start ? 1f : 0f);
     }
 }

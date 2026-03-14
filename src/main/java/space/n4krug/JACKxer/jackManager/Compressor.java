@@ -2,7 +2,6 @@ package space.n4krug.JACKxer.jackManager;
 
 import java.nio.FloatBuffer;
 
-import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 
 import space.n4krug.JACKxer.control.ControlParameter;
@@ -20,13 +19,13 @@ public class Compressor extends Client {
     private float release = 0.1f;
     private final ControlParameter<Float> releaseParam;
 
-    private float makeupGain = 1f;
+    private float makeupGain = 1f; // linear
     private final ControlParameter<Float> makeupParam;
 
     private float envelope = 0f;
     private float gain = 1f;
 
-    private final float sampleRate = 48000f;
+    private final float sampleRate;
 
     private float attackCoef;
     private float releaseCoef;
@@ -34,24 +33,26 @@ public class Compressor extends Client {
     public Compressor(String name, ParameterRegistry registry) throws JackException {
         super(name, new String[]{"in"}, new String[]{"out"}, registry);
 
+        sampleRate = this.client.getSampleRate();
+
         thresholdParam = ControlParameter.range(-60f, 0f, thresholdDb);
-        thresholdParam.addListener(dB -> setThresholdDb(dB));
+        thresholdParam.addDirectListener(dB -> setThresholdDb(dB));
         registry.register(name + ".threshold", thresholdParam);
 
         ratioParam = ControlParameter.range(1, 10, ratio);
-        ratioParam.addListener(ratio -> setRatio(ratio));
+        ratioParam.addDirectListener(ratio -> setRatio(ratio));
         registry.register(name + ".ratio", ratioParam);
         
         attackParam = ControlParameter.range(0.001f, 0.2f, attack);
-        attackParam.addListener(s -> setAttack(s));
+        attackParam.addDirectListener(s -> setAttack(s));
         registry.register(name + ".attack", attackParam);
         
         releaseParam = ControlParameter.range(0.01f, 1f, release);
-        releaseParam.addListener(s -> setRelease(s));
+        releaseParam.addDirectListener(s -> setRelease(s));
         registry.register(name + ".release", releaseParam);
         
-        makeupParam = ControlParameter.range(-6, 24, makeupGain);
-        makeupParam.addListener(gain -> setMakeupGaindB(gain));
+        makeupParam = ControlParameter.range(-6, 24, 0f);
+        makeupParam.addDirectListener(this::setMakeupGaindB);
         registry.register(name + ".makeup", makeupParam);
         
         attackCoef = (float)Math.exp(-1.0 / (sampleRate * attack));
@@ -92,12 +93,12 @@ public class Compressor extends Client {
         releaseCoef = (float)Math.exp(-1.0 / (sampleRate * release));
 	}
 
-	public float getMakeupGain() {
+    public float getMakeupGain() {
 		return makeupGain;
 	}
 
-	private void setMakeupGaindB(float makeupGain) {
-		this.makeupGain = (float) Math.pow(10, makeupGain/20);
+	private void setMakeupGaindB(float makeupGainDb) {
+		this.makeupGain = (float) Math.pow(10, makeupGainDb / 20f);
 	}
 
 	private volatile float gainReductionDb = 0f;

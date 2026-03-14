@@ -235,11 +235,11 @@ public abstract class Client implements JackProcessCallback {
 
 		ControlParameter<Boolean> bypassedParam = ControlParameter.toggle(bypassed);
 		registry.register(name + ".bypass", bypassedParam);
-		bypassedParam.addListener(state -> setBypass(state));
+		bypassedParam.addDirectListener(state -> setBypass(state));
 
         ControlParameter<Boolean> on = ControlParameter.toggle(!muted);
 		registry.register(name + ".on", on);
-		on.addListener(state -> setMute(!state));
+		on.addDirectListener(state -> setMute(!state));
 	}
 
 	public String[] getInputNames() {

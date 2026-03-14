@@ -23,22 +23,28 @@ public class ParametricEQ extends Client {
             Biquad biquad = new Biquad();
             biquads[i] = biquad;
             ControlParameter<Float> q = ControlParameter.range(0.3f, 10f, 1f);
-            ControlParameter<Biquad.Type> type = new ControlParameter<Biquad.Type>(v ->
-                    Biquad.Type.values()[Math.round(v * (Biquad.Type.values().length - 1))]
-                    , bands[i]);
+            Biquad.Type[] types = Biquad.Type.values();
+            float typeNorm =
+                    (types.length <= 1) ? 0f : (float) bands[i].ordinal() / (types.length - 1);
+            ControlParameter<Biquad.Type> type = new ControlParameter<>(
+                    v -> types[Math.round(v * (types.length - 1))],
+                    typeNorm
+            );
             ControlParameter<Float> gainDb = ControlParameter.range(-24, 24, 0);
+            float startFreq = freq(bands.length, i);
+            float freqNorm = (float) freqToNorm(startFreq);
             ControlParameter<Float> freq = new ControlParameter<>(
                     v -> (float) normToFreq(v),
-                    freq(bands.length, i)
+                    freqNorm
             );
 
-            q.addListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
+            q.addDirectListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
                     samplingRate));
-            type.addListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
+            type.addDirectListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
                     samplingRate));
-            gainDb.addListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
+            gainDb.addDirectListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
                     samplingRate));
-            freq.addListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
+            freq.addDirectListener(_ -> biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(),
                     samplingRate));
 
             biquad.set(type.getValue(), freq.getValue(), q.getValue(), gainDb.getValue(), samplingRate);
@@ -56,6 +62,13 @@ public class ParametricEQ extends Client {
         double fMax = 20000;
 
         return fMin * Math.pow(fMax / fMin, t);
+    }
+
+    private static double freqToNorm(double freq) {
+        double fMin = 20;
+        double fMax = 20000;
+        double clamped = Math.max(fMin, Math.min(fMax, freq));
+        return Math.log(clamped / fMin) / Math.log(fMax / fMin);
     }
 
     private float freq(int amount, int num) {
