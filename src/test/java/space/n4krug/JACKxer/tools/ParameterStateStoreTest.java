@@ -38,6 +38,7 @@ public class ParameterStateStoreTest extends TestCase {
         ControlParameter<Float> threshold = ControlParameter.range(-60, 0, -60);
         ControlParameter<Boolean> compBypass = ControlParameter.toggle(false);
         ControlParameter<Float> eqFreq = new ControlParameter<>(v -> v, 0f);
+        ControlParameter<Float> eqGain = new ControlParameter<>(v -> v, 0f);
         ControlParameter<Boolean> eqBypass = ControlParameter.toggle(true);
         ControlParameter<Float> gain = ControlParameter.range(-60, 6, -60);
         ControlParameter<Boolean> on = ControlParameter.toggle(true);
@@ -45,6 +46,7 @@ public class ParameterStateStoreTest extends TestCase {
         after.register("Out 0.Ch0.1.compressor.threshold", threshold);
         after.register("Out 0.Ch0.1.compressor.bypass", compBypass);
         after.register("Out 0.Ch0.2.eq.band0.freq", eqFreq);
+        after.register("Out 0.Ch0.2.eq.band0.gain", eqGain);
         after.register("Out 0.Ch0.2.eq.bypass", eqBypass);
         after.register("Out 0.Ch0.3.gain.gain", gain);
         after.register("Out 0.Ch0.3.gain.on", on);
@@ -55,6 +57,7 @@ public class ParameterStateStoreTest extends TestCase {
         assertTrue("compressor bypass should be applied", compBypass.getValue().booleanValue());
 
         assertEquals("eq freq should be applied", 0.25f, eqFreq.getNormalized(), 1e-6f);
+        assertEquals("eq band gain should be applied", 0.5f, eqGain.getNormalized(), 1e-6f);
         assertFalse("eq bypass should be applied", eqBypass.getValue().booleanValue());
 
         // gain/on must remain at their defaults in the new registry

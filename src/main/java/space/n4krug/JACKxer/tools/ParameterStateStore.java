@@ -146,12 +146,12 @@ public final class ParameterStateStore {
     }
 
     private static boolean isAllowedKey(String id, Set<String> persistableClientIds) {
-        if (id.endsWith(".gain") || id.endsWith(".on")) {
-            return false;
-        }
-
         if (isPersistedKnobId(id)) {
             return true;
+        }
+
+        if (id.endsWith(".gain") || id.endsWith(".on")) {
+            return false;
         }
 
         if (id.endsWith(".bypass")) {
@@ -223,4 +223,3 @@ public final class ParameterStateStore {
         return sb.toString();
     }
 }
-
