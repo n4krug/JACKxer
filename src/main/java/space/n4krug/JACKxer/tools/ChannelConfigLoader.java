@@ -23,6 +23,12 @@ public class ChannelConfigLoader {
 
 //	private final ParameterRegistry params = new ParameterRegistry();
 
+	/**
+	 * Loads a channel graph configuration, registers parameters, creates clients, connects ports,
+	 * and builds the GUI pages.
+	 * <p>
+	 * The config file is read from {@code config/<file>}.
+	 */
 	public static void load(String file, ClientRegistry registry, ParameterRegistry params, MainWindow mainWin, PreviewWindow prevWin)
 			throws FileNotFoundException, IOException, EvaluationException, ParseException {
 

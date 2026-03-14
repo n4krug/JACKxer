@@ -20,6 +20,12 @@ public class MainWindow extends BorderPane {
 	private final ParameterRegistry params;
 	//private final ArrayList<ControlParameter<Boolean>> pageParams = new ArrayList<>();
 
+	/**
+	 * Main UI container for channel pages.
+	 * <p>
+	 * Each page is controlled by a {@code active-page.<n>} toggle parameter in the
+	 * {@link ParameterRegistry}.
+	 */
 	public MainWindow(ParameterRegistry params) {
 		this.params = params;
 		this.setBottom(pageNav);

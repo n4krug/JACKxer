@@ -9,6 +9,11 @@ import com.ezylang.evalex.parser.ParseException;
 
 public class ConfigParser {
 
+	/**
+	 * Parses {@code var} or {@code counter} entries from a config section.
+	 * <p>
+	 * Expected syntax: {@code "<prefix> <name> = <int>"}.
+	 */
 	public static Map<String, Integer> parseParams(String prefix, List<String> lines) {
 		Map<String, Integer> map = new HashMap<>();
 

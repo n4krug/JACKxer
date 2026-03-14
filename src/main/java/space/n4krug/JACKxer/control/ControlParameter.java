@@ -21,14 +21,33 @@ public class ControlParameter<T> {
         setNormalizedInternal(normalizedStart, false);
 	}
 	
+    /**
+     * Adds a listener that is always invoked on the JavaFX application thread.
+     * <p>
+     * If {@link #setNormalized(float)} is called off the FX thread, the callback is scheduled
+     * via {@link javafx.application.Platform#runLater(Runnable)}.
+     */
 	public void addListener(Consumer<T> listener) {
 		fxListeners.add(listener);
 	}
 	
+    /**
+     * Adds a listener that is invoked synchronously on the calling thread of
+     * {@link #setNormalized(float)}.
+     * <p>
+     * Use this for DSP-side parameter updates where scheduling onto the FX thread would add
+     * latency (for example when parameters are driven by MIDI input).
+     */
     public void addDirectListener(Consumer<T> listener) {
         directListeners.add(listener);
     }
 
+    /**
+     * Sets the parameter value using a normalized range of {@code [0..1]}.
+     * <p>
+     * The mapper passed to the constructor converts the normalized value into the typed
+     * parameter value.
+     */
     public void setNormalized(float v) {
 
         setNormalizedInternal(v, true);
@@ -81,6 +100,9 @@ public class ControlParameter<T> {
         return value;
     }
 
+    /**
+     * Returns the last normalized value that was set, clamped to {@code [0..1]}.
+     */
     public float getNormalized() { return normalized; }
     
     public static ControlParameter<Float> range(float min, float max, float start) {
