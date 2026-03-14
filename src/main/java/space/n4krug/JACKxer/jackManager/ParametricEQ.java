@@ -9,6 +9,12 @@ import java.nio.FloatBuffer;
 public class ParametricEQ extends Client {
     private final Biquad[] biquads;
 
+    /**
+     * Parametric EQ implemented as a cascade of biquads.
+     * <p>
+     * Registers per-band parameters under {@code &lt;name&gt;.band&lt;i&gt;.*}:
+     * {@code freq} (Hz), {@code gain} (dB), {@code q}, and {@code type}.
+     */
     public Biquad[] getBands() { return biquads; }
 
     public ParametricEQ(String name, ParameterRegistry registry, Biquad.Type[] bands)

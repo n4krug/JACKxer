@@ -5,7 +5,7 @@ import space.n4krug.JACKxer.control.ParameterRegistry;
 public class NodeSpec {
 
 	public final ParameterRegistry registry;
-    public final String name;
+	public final String name;
     public final String type;
     public final String[] args;
 
@@ -16,6 +16,9 @@ public class NodeSpec {
         this.registry = registry;
     }
     
+	/**
+	 * Parses a node specification of the form {@code "type(arg1, arg2, ...)"}.
+	 */
 	public static NodeSpec parseNode(String name, String spec, ParameterRegistry registry) {
 
 		int start = spec.indexOf('(');

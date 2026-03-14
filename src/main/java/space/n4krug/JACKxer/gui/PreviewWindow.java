@@ -14,6 +14,9 @@ public class PreviewWindow extends BorderPane {
     private final List<Pane> pages = new ArrayList<>();
     ParameterRegistry params;
 
+    /**
+     * Secondary window that mirrors the active page selection from {@link MainWindow}.
+     */
     public PreviewWindow(ParameterRegistry params) {
         this.params = params;
     }

@@ -21,6 +21,11 @@ import space.n4krug.JACKxer.control.ParameterRegistry;
 
 public abstract class Client implements JackProcessCallback {
 
+	/**
+	 * The underlying JACK client handle.
+	 * <p>
+	 * This is exposed for port name resolution and sample rate queries.
+	 */
 	public final JackClient client;
 	private final ArrayList<JackPort> inputs = new ArrayList<JackPort>();
 	private final ArrayList<JackPort> outputs = new ArrayList<JackPort>();
@@ -42,6 +47,9 @@ public abstract class Client implements JackProcessCallback {
 	private final float[] fftBuffer = new float[FFT_BUFFER_SIZE];
 	private volatile int fftWritePos = 0;
 
+	/**
+	 * Returns the configured instance name of this client.
+	 */
     public String toString() {
 		return name;
 	}
@@ -141,6 +149,12 @@ public abstract class Client implements JackProcessCallback {
 
 	abstract protected void processAudio(FloatBuffer[] in, FloatBuffer[] out, int nframes);
 
+	/**
+	 * Called after {@link #processAudio(FloatBuffer[], FloatBuffer[], int)} to update meters,
+	 * the FFT ring buffer, and apply post effects such as muting.
+	 * <p>
+	 * Runs on the JACK realtime process thread.
+	 */
 	protected void postProcess(FloatBuffer buf, int nframes) {
 		float peak = 0;
 		float sum = 0;

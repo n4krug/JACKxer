@@ -10,6 +10,11 @@ import space.n4krug.JACKxer.control.ParameterRegistry;
 
 public class Gain extends Client {
 
+	/**
+	 * Simple linear gain stage.
+	 * <p>
+	 * Exposes {@code &lt;name&gt;.gain} as a dB parameter in the range {@code [-60..6]}.
+	 */
 	private float gain;
 
 	private final ControlParameter<Float> gainParam;

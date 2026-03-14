@@ -28,6 +28,12 @@ public class MidiConfigLoader {
 	private static final String MIDI_CONFIG_LOCATION = "config/midi/";
 	private static final ArrayList<MidiDevice> openDevices = new ArrayList<>();
 
+	/**
+	 * Loads a MIDI mapping config for a specific MIDI device.
+	 * <p>
+	 * The file format uses {@code control <id> = <parameterId>} entries, where {@code <id>}
+	 * typically looks like {@code ch0.cc74}.
+	 */
 	public static void load(String file, MidiRouter router, ParameterRegistry registry, MidiDevice.Info deviceInfo)
 			throws FileNotFoundException, IOException, MidiUnavailableException, EvaluationException, ParseException {
 

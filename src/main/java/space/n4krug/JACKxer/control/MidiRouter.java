@@ -8,10 +8,19 @@ public class MidiRouter {
 
 	private final HashMap<Key, ControlParameter<?>> map = new HashMap<>();
 
+	/**
+	 * Maps an incoming control id (for example {@code ch0.cc74}) from a specific controller
+	 * (device name) onto a {@link ControlParameter}.
+	 */
 	public void map(String controller, String id, ControlParameter<?> param) {
 		map.put(new Key(controller, id), param);
 	}
 
+	/**
+	 * Handles a control event and applies it to the mapped {@link ControlParameter}.
+	 * <p>
+	 * Absolute events set the normalized value directly. Relative events apply a small delta.
+	 */
 	public void handle(ControlEvent e) {
 
 		ControlParameter<?> p = map.get(new Key(e.controller, e.id));

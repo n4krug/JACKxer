@@ -9,6 +9,13 @@ import space.n4krug.JACKxer.control.ParameterRegistry;
 
 public class Compressor extends Client {
 
+    /**
+     * A basic peak detector + static curve compressor.
+     * <p>
+     * Parameters are registered under the client name:
+     * {@code .threshold} (dB), {@code .ratio}, {@code .attack} (s), {@code .release} (s),
+     * {@code .makeup} (dB).
+     */
     private float thresholdDb = -18f;
     private final ControlParameter<Float> thresholdParam;
     private float ratio = 4f;

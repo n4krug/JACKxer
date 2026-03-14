@@ -18,8 +18,11 @@ import space.n4krug.JACKxer.tools.ChannelConfigLoader;
 import space.n4krug.JACKxer.tools.MidiConfigLoader;
 
 /**
- * Hello world!
- *
+ * JavaFX entrypoint.
+ * <p>
+ * Bootstraps the {@link space.n4krug.JACKxer.jackManager.ClientRegistry} and
+ * {@link space.n4krug.JACKxer.control.ParameterRegistry}, then loads the audio graph and UI
+ * from configuration files under {@code config/}.
  */
 public class App extends Application {
 
