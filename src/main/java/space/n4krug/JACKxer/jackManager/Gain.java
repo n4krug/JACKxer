@@ -2,7 +2,6 @@ package space.n4krug.JACKxer.jackManager;
 
 import java.nio.FloatBuffer;
 
-import org.jaudiolibs.jnajack.JackClient;
 import org.jaudiolibs.jnajack.JackException;
 
 import space.n4krug.JACKxer.control.ControlParameter;
@@ -19,7 +18,7 @@ public class Gain extends Client {
 		super(name, new String[] { "in" }, new String[] { "out" }, registry);
 		gainParam = ControlParameter.range(-60, 6, -60);
 		setGaindB(gainParam.getValue());
-		gainParam.addListener(this::setGaindB);
+		gainParam.addDirectListener(this::setGaindB);
 		registry.register(name + ".gain", gainParam);
 	}
 

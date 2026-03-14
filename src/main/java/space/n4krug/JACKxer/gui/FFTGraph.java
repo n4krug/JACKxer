@@ -25,6 +25,7 @@ public class FFTGraph extends Canvas {
 
     private final double[] bandFreq;
     private final float[] bandMag;
+    private final float[] prevBandMag;
 
     private final int sampleRate;
 
@@ -36,6 +37,7 @@ public class FFTGraph extends Canvas {
         this.bands = bands;
         bandFreq = new double[this.bands];
         bandMag = new float[this.bands];
+        prevBandMag = new float[this.bands];
 
         this.source = source;
         try {
@@ -60,35 +62,19 @@ public class FFTGraph extends Canvas {
 
             bandFreq[b] = (f1 + f2) * 0.5;
 
-            bandStart[b] = (int)(f1 * FFT_SIZE / sampleRate);
-            bandEnd[b]   = (int)(f2 * FFT_SIZE / sampleRate);
+            bandStart[b] = clampBin((int) (f1 * FFT_SIZE / sampleRate));
+            bandEnd[b] = clampBin((int) (f2 * FFT_SIZE / sampleRate));
         }
 
 
         AnimationTimer timer = new AnimationTimer() {
             public void handle(long now) {
                 updateFFT();
+                updateBands(bandStart, bandEnd);
                 render();
 
-                float[] previous = bandMag.clone();
-
                 for (int b = 0; b < bands; b++) {
-
-                    int start = bandStart[b];
-                    int end   = bandEnd[b];
-
-                    float sum = 0;
-                    int count = 0;
-
-                    for (int i = start; i <= end; i++) {
-                        sum += spectrum[i] * spectrum[i];
-                        count++;
-                    }
-
-                    //[b]bandMag[b] = sum / Math.max(count,1);
-                    bandMag[b] = (float) Math.sqrt(sum / Math.max(count,1));
-
-                    bandMag[b] = bandMag[b] * 0.3f + previous[b] * 0.7f;
+                    prevBandMag[b] = bandMag[b];
                 }
             }
         };
@@ -104,16 +90,50 @@ public class FFTGraph extends Canvas {
 
         fft.realForward(samples);
 
-        //float[] previous = spectrum.clone();
-
-        for (int i = 0; i < spectrum.length; i++) {
-
-            float re = samples[2*i];
-            float im = samples[2*i+1];
-
-            spectrum[i] = (float)Math.sqrt(re*re + im*im);
-            //spectrum[i] = spectrum[i] * 0.3f + previous[i] * 0.7f;
+        // JTransforms realForward packing:
+        // a[0] = Re(0), a[1] = Re(N/2) (Nyquist), and for k=1..N/2-1: a[2k]=Re(k), a[2k+1]=Im(k)
+        spectrum[0] = Math.abs(samples[0]);
+        for (int i = 1; i < spectrum.length; i++) {
+            float re = samples[2 * i];
+            float im = samples[2 * i + 1];
+            spectrum[i] = (float) Math.sqrt(re * re + im * im);
         }
+    }
+
+    private void updateBands(int[] bandStart, int[] bandEnd) {
+        for (int b = 0; b < bands; b++) {
+            int start = bandStart[b];
+            int end = bandEnd[b];
+
+            if (end < start) {
+                int tmp = start;
+                start = end;
+                end = tmp;
+            }
+
+            float sum = 0;
+            int count = 0;
+
+            for (int i = start; i <= end; i++) {
+                float v = spectrum[i];
+                sum += v * v;
+                count++;
+            }
+
+            float rms = (float) Math.sqrt(sum / Math.max(count, 1));
+            bandMag[b] = rms * 0.3f + prevBandMag[b] * 0.7f;
+        }
+    }
+
+    private int clampBin(int bin) {
+        if (bin < 0) {
+            return 0;
+        }
+        int max = spectrum.length - 1;
+        if (bin > max) {
+            return max;
+        }
+        return bin;
     }
 
     private void window(float[] s) {
