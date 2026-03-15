@@ -35,6 +35,7 @@ public abstract class Client implements JackProcessCallback {
 
 	private volatile boolean muted = false;
 	private volatile boolean bypassed = false;
+	private volatile boolean warnedFrameMismatch = false;
 
 	private volatile float peakLevel = 0f;
 	private volatile float rmsLevel = 0f;
@@ -46,6 +47,23 @@ public abstract class Client implements JackProcessCallback {
 
 	private final float[] fftBuffer = new float[FFT_BUFFER_SIZE];
 	private volatile int fftWritePos = 0;
+
+	/**
+	 * Normalizes FloatBuffer state for absolute indexed access and clamps to a safe frame count.
+	 * <p>
+	 * Note: {@link FloatBuffer#get(int)} and {@link FloatBuffer#put(int, float)} are bounds-checked
+	 * against {@code limit}, not {@code capacity}. On the JACK process thread, we always want a
+	 * consistent {@code [0..frames)} view.
+	 */
+	private static int normalizeAndClamp(FloatBuffer buf, int nframes) {
+		if (buf == null) {
+			return 0;
+		}
+		buf.clear(); // position=0, limit=capacity
+		int frames = Math.min(nframes, buf.capacity());
+		buf.limit(frames);
+		return frames;
+	}
 
 	/**
 	 * Returns the configured instance name of this client.
@@ -86,6 +104,9 @@ public abstract class Client implements JackProcessCallback {
 	}
 
 	protected FloatBuffer preProcess(FloatBuffer buf, int nframes) {
+		if (buf == null || nframes <= 0) {
+			return buf;
+		}
 		float peak = 0;
 		float sum = 0;
 
@@ -112,16 +133,53 @@ public abstract class Client implements JackProcessCallback {
 		FloatBuffer[] inBufs = new FloatBuffer[inputs.size()];
 		FloatBuffer[] outBufs = new FloatBuffer[outputs.size()];
 
+		int frames = nframes;
+		int minInCap = Integer.MAX_VALUE;
+		int minOutCap = Integer.MAX_VALUE;
+
 		for (int i = 0; i < inputs.size(); i++) {
 			inBufs[i] = inputs.get(i).getFloatBuffer();
-			preProcess(inBufs[i], nframes);
+			if (inBufs[i] != null) {
+				minInCap = Math.min(minInCap, inBufs[i].capacity());
+			} else {
+				minInCap = 0;
+			}
+			frames = Math.min(frames, normalizeAndClamp(inBufs[i], nframes));
 		}
 
 		for (int i = 0; i < outputs.size(); i++) {
 			outBufs[i] = outputs.get(i).getFloatBuffer();
+			if (outBufs[i] != null) {
+				minOutCap = Math.min(minOutCap, outBufs[i].capacity());
+			} else {
+				minOutCap = 0;
+			}
+			frames = Math.min(frames, normalizeAndClamp(outBufs[i], nframes));
 		}
 
-		 if (bypassed) {
+		if (frames <= 0) {
+			return true;
+		}
+
+		if (frames < nframes && !warnedFrameMismatch) {
+			warnedFrameMismatch = true;
+			String inCap = inputs.isEmpty() ? "-" : Integer.toString(minInCap == Integer.MAX_VALUE ? 0 : minInCap);
+			String outCap = outputs.isEmpty() ? "-" : Integer.toString(minOutCap == Integer.MAX_VALUE ? 0 : minOutCap);
+			System.err.println(
+					"[JACKxer] Frame clamp for \"" + name + "\": nframes=" + nframes +
+					", frames=" + frames +
+					", inPorts=" + inputs.size() +
+					", outPorts=" + outputs.size() +
+					", minInCap=" + inCap +
+					", minOutCap=" + outCap
+			);
+		}
+
+		for (int i = 0; i < inBufs.length; i++) {
+			preProcess(inBufs[i], frames);
+		}
+
+			 if (bypassed) {
 
 			int n = Math.min(inBufs.length, outBufs.length);
 
@@ -129,19 +187,19 @@ public abstract class Client implements JackProcessCallback {
 				FloatBuffer in = inBufs[ch];
 				FloatBuffer out = outBufs[ch];
 
-				for (int i = 0; i < nframes; i++) {
+				for (int i = 0; i < frames; i++) {
 					out.put(i, in.get(i));
 				}
 			}
 
 		} else {
 
-			processAudio(inBufs, outBufs, nframes);
+			processAudio(inBufs, outBufs, frames);
 
 		}
 
 		for (FloatBuffer out : outBufs) {
-			postProcess(out, nframes);
+			postProcess(out, frames);
 		}
 
 		return true;
@@ -156,6 +214,9 @@ public abstract class Client implements JackProcessCallback {
 	 * Runs on the JACK realtime process thread.
 	 */
 	protected void postProcess(FloatBuffer buf, int nframes) {
+		if (buf == null || nframes <= 0) {
+			return;
+		}
 		float peak = 0;
 		float sum = 0;
 
@@ -171,16 +232,14 @@ public abstract class Client implements JackProcessCallback {
 			sum += sample * sample;
 		}
 
-		if (buf != null) {
-			for (int i = 0; i < nframes; i++) {
+		for (int i = 0; i < nframes; i++) {
 
-				float s = buf.get(i);
+			float s = buf.get(i);
 
-				fftBuffer[fftWritePos++] = s;
+			fftBuffer[fftWritePos++] = s;
 
-				if (fftWritePos >= fftBuffer.length)
-					fftWritePos = 0;
-			}
+			if (fftWritePos >= fftBuffer.length)
+				fftWritePos = 0;
 		}
 
 		peakLevel = Math.max(peak, peakLevel * 0.95f);
