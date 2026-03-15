@@ -146,7 +146,7 @@ public class FFTGraph extends Canvas {
         }
     }
 
-    private void render() {
+    protected void render() {
 
         GraphicsContext g = getGraphicsContext2D();
 

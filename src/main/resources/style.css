@@ -26,6 +26,10 @@
   -fx-background-color: -fx-bg1;
 }
 
+.overlay-content {
+    -fx-background-radius: 8;
+}
+
 /* .page-nav-button { */
 /*   -fx-background-color: -fx-bg3; */
 /*   -fx-background-radius: 8; */

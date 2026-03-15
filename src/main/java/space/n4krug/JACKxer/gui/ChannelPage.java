@@ -16,22 +16,37 @@ import space.n4krug.JACKxer.tools.StringPair;
 
 public class ChannelPage extends GridPane {
 	public ChannelPage(String page, List<StringPair> chains, Map<String, String> nodes, ClientRegistry clients,
-					   ParameterRegistry params) {
+					   ParameterRegistry params, MainWindow mainWin) {
 
-		ColumnConstraints constraints = new ColumnConstraints(100, 100, Double.MAX_VALUE);
+		//ColumnConstraints constraints = new ColumnConstraints(100, 100, Double.MAX_VALUE);
 		//constraints.setHgrow(Priority.ALWAYS);
+		getStyleClass().add("channel-page");
+		setPadding(new Insets(10));
+		setHgap(10);
+		setVgap(10);
+		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-		this.setPadding(new Insets(10));
-		this.setHgap(10);
+		ColumnConstraints cc = new ColumnConstraints();
+		cc.setPercentWidth(100.0 / chains.size());
+		cc.setHgrow(Priority.ALWAYS);
+		cc.setFillWidth(true);
+
+		for (int i = 0; i < chains.size(); i++) {
+			getColumnConstraints().add(cc);
+		}
 
 		int i = 0;
 		for (StringPair chain : chains) {
 			ChannelStrip strip;
 			try {
-				strip = new ChannelStrip(page + "." + chain.getKey(), clients, params);
-				this.add(strip, i, 0);
-				this.getStyleClass().add("channel-page");
-				this.getColumnConstraints().add(constraints);
+				strip = new ChannelStrip(page + "." + chain.getKey(), clients, params, mainWin);
+				strip.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+				GridPane.setHgrow(strip, Priority.ALWAYS);
+				GridPane.setVgrow(strip, Priority.ALWAYS);
+				add(strip, i, 0);
+				getStyleClass().add("channel-page");
+				//this.getColumnConstraints().add(constraints);
 				List<String> chainClients = ConfigParser.getChainNodes(nodes, page + "." + chain.getKey(),
 						Collections.reverseOrder());
 				ControlParameter<Boolean> on = params.get(chainClients.getFirst() + ".on");

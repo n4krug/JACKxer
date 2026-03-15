@@ -1,6 +1,7 @@
 package space.n4krug.JACKxer.gui;
 
 import javafx.animation.AnimationTimer;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
@@ -9,27 +10,35 @@ import javafx.scene.paint.Stop;
 import javafx.scene.shape.Rectangle;
 import space.n4krug.JACKxer.jackManager.Client;
 
-public class LevelMeter extends StackPane {
+public class LevelMeter extends Pane {
 
 	public static enum Type {
 		PRE, POST
 	}
 
-	private static final int WIDTH = 20;
-	private static final int HEIGHT = 200;
+	private static final int DEFAULT_WIDTH = 20;
+	private static final int DEFAULT_HEIGHT = 200;
 
-	private final Rectangle mask = new Rectangle(WIDTH, HEIGHT);
-	private final Rectangle peakLine = new Rectangle(WIDTH, 4);
+	private final Rectangle mask = new Rectangle();
+	private final Rectangle peakLine = new Rectangle();
+	private final Rectangle background = new Rectangle();
 
 	public LevelMeter(Client client, Type type) {
 
-		Rectangle background = new Rectangle(WIDTH, HEIGHT);
+		setPrefSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		setMinSize(0, 0);
+		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+		background.setManaged(false);
+		mask.setManaged(false);
+		peakLine.setManaged(false);
 
 		background.setFill(new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, new Stop(0, Color.RED),
 				new Stop(0.2, Color.YELLOW), new Stop(1, Color.LIMEGREEN)));
 
 		mask.setFill(Color.BLACK);
 		peakLine.setFill(Color.GRAY);
+		peakLine.setHeight(4);
 
 		getChildren().addAll(background, mask, peakLine);
 
@@ -40,21 +49,25 @@ public class LevelMeter extends StackPane {
 			@Override
 			public void handle(long now) {
 
-				double db;
-				if (type == Type.PRE) {
-					db = client.getPrePeakdB();
-				} else {
-					db = client.getPeakdB();
-				}
+				double db = type == Type.PRE
+						? client.getPrePeakdB()
+						: client.getPeakdB();
 
-				double h = dbToHeight(db);
-
+				double h = dbToHeight(db, getHeight());
 				peakHold = Math.max(h, peakHold * 0.999);
 
-				mask.setHeight(HEIGHT - h);
-				mask.setTranslateY(-h / 2);
+				requestLayout();
 
-				peakLine.setTranslateY(-(peakHold - HEIGHT / 2));
+				mask.setX(0);
+				mask.setY(0);
+				mask.setWidth(getWidth());
+				mask.setHeight(Math.max(0, getHeight() - h));
+
+				peakLine.setX(0);
+				peakLine.setWidth(getWidth());
+				peakLine.setY(
+						Math.max(0, getHeight() - peakHold - peakLine.getHeight() / 2)
+				);
 			}
 		};
 
@@ -66,7 +79,15 @@ public class LevelMeter extends StackPane {
 
 	}
 
-	private static double dbToHeight(double db) {
+	@Override
+	protected void layoutChildren() {
+		background.setX(0);
+		background.setY(0);
+		background.setWidth(getWidth());
+		background.setHeight(getHeight());
+	}
+
+	private static double dbToHeight(double db, double height) {
 
 		double min = -60;
 		double max = 0;
@@ -75,6 +96,6 @@ public class LevelMeter extends StackPane {
 
 		double norm = (db - min) / (max - min);
 
-		return norm * HEIGHT;
+		return norm * height;
 	}
 }

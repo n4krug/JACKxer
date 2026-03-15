@@ -33,8 +33,8 @@ public class App extends Application {
 		ClientRegistry clientRegistry = new ClientRegistry();
 		ParameterRegistry params = new ParameterRegistry();
 		MainWindow mainWin = new MainWindow(params);
-		PreviewWindow prevWin = new PreviewWindow(params);
-		ChannelConfigLoader.load(MAIN_CONFIG, clientRegistry, params, mainWin, prevWin);
+		//PreviewWindow prevWin = new PreviewWindow(params);
+		ChannelConfigLoader.load(MAIN_CONFIG, clientRegistry, params, mainWin, null);
 		ParameterStateStore.loadAndApply(MAIN_CONFIG, params);
 		MidiRouter midi = new MidiRouter();
 		MidiConfigLoader.loadAllAvailable(midi, params);
@@ -43,12 +43,13 @@ public class App extends Application {
 		scene.getStylesheets().add("style.css");
 		stage.setScene(scene);
 		stage.show();
+		stage.setFullScreen(true);
 
-		Scene previewScene = new Scene(prevWin);
-		previewScene.getStylesheets().add("style.css");
-		Stage previewStage = new Stage();
-		previewStage.setScene(previewScene);
-		previewStage.show();
+		//Scene previewScene = new Scene(prevWin);
+		//previewScene.getStylesheets().add("style.css");
+		//Stage previewStage = new Stage();
+		//previewStage.setScene(previewScene);
+		//previewStage.show();
 
 		stage.setOnCloseRequest(_ -> {
 			if (saved.compareAndSet(false, true)) {

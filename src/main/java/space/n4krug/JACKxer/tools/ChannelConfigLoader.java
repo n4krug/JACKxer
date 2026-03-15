@@ -170,7 +170,7 @@ public class ChannelConfigLoader {
 			if (page.equals("global")) {
 				continue;
 			}
-			mainWin.addPage(new ChannelPage(page, chains.get(page), nodes, registry, params), page);
+			mainWin.addPage(new ChannelPage(page, chains.get(page), nodes, registry, params, mainWin), page);
 			if (prevWin != null) {
 				prevWin.addPage(ChannelPreview.createChannelPreviews(page, chains.get(page), registry, params), page);
 			}

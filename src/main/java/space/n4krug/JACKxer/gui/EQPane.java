@@ -2,6 +2,7 @@ package space.n4krug.JACKxer.gui;
 
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Insets;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
@@ -87,8 +88,29 @@ public class EQPane extends GridPane {
             controls.getChildren().addAll(typeComboBox, freqSlider, gainSlider, qSlider);
         }
 
+        ControlParameter<Boolean> bypass = params.get(eq + ".bypass");
+        Button bypassButton = new Button("OFF");
+        if (!bypass.getValue()) {
+            bypassButton.getStyleClass().add("active");
+            bypassButton.setText("ON");
+        }
+        bypass.addListener(v -> {
+            if (!v) {
+                bypassButton.getStyleClass().add("active");
+                bypassButton.setText("ON");
+            } else {
+                bypassButton.getStyleClass().remove("active");
+                bypassButton.setText("OFF");
+            }
+        });
+        bypassButton.setOnAction(e -> {
+            bypass.setNormalized(bypass.getValue() ? 0 : 1);
+        });
+        bypassButton.setPrefSize(60, 60);
+
         add(graphs, 0, 0);
         add(controls, 1, 0);
+        add(bypassButton, 1, 1);
         this.getStyleClass().add("eq-pane");
     }
 
