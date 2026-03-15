@@ -1,233 +1,288 @@
 package space.n4krug.JACKxer.gui;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
+import javafx.scene.layout.Region;
 import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
-//import javafx.event.ActionEvent;
-//import javafx.event.EventHandler;
-import space.n4krug.JACKxer.jackManager.*;
+import space.n4krug.JACKxer.jackManager.Client;
+import space.n4krug.JACKxer.jackManager.ClientRegistry;
+import space.n4krug.JACKxer.jackManager.Compressor;
+import space.n4krug.JACKxer.jackManager.Gain;
+import space.n4krug.JACKxer.jackManager.ParametricEQ;
 
-public class ChannelStrip extends VBox {
+public class ChannelStrip extends Region {
 
-	private static final int METER_HEIGHT = 200;
-	private static final int METER_WIDTH = 20;
+    private static final double GAP = 8.0;
+    private static final double METERS_HEIGHT_PCT = 0.38; // percentage of total strip height
+    private static final double BUTTON_WIDTH_PCT = 0.90;  // percentage of strip width, then clamped to fit height
+    private static final double FFT_ASPECT_W_OVER_H = 5.0 / 4.0; // 3:2 aspect ratio
 
-	private Gain gainClient;
-	private Compressor compClient;
-	private ParametricEQ eqClient;
-	private final Client lastClient;
-	private final Client firstClient;
+    private Gain gainClient;
+    private Compressor compClient;
+    private ParametricEQ eqClient;
+    private final Client lastClient;
+    private final Client firstClient;
 
-	private final MainWindow mainWin;
+    private final MainWindow mainWin;
 
-	public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params, MainWindow mainWin) throws Exception {
+    private final Label name;
+    private final LevelMeter preMeter;
+    private final LevelMeter postMeter;
+    private final Slider fader;
+    private final FFTGraph visGraph;
 
-		this.setPadding(new Insets(10));
-		this.getStyleClass().add("channel-strip");
-		this.mainWin = mainWin;
-		setFillWidth(true);
-		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+    private final Button mute;
+    private final Button comp;
+    private final Button eq;
+    private final List<Button> buttons = new ArrayList<>();
 
-		Set<String> allClients = clients.getClientNames();
-		ArrayList<String> chainClients = new ArrayList<>();
-		for (String client : allClients) {
-			if (client.startsWith(chainName)) {
-				chainClients.add(client);
-			}
-		}
-		if (chainClients.isEmpty()) {
-			throw new Exception("No clients in chain: " + chainName);
-		}
-		chainClients.sort(Comparator.naturalOrder());
-		
-		for (String client : chainClients) {
-			if (client.endsWith("gain")) {
-				gainClient = (Gain) clients.get(client);
-			}
-			if (client.endsWith("compressor")) {
-				compClient = (Compressor) clients.get(client);
-			}
-			if (client.endsWith("eq")) {
-				eqClient = (ParametricEQ) clients.get(client);
-			}
-		}
-		lastClient = clients.get(chainClients.getLast());
-		firstClient = clients.get(chainClients.getFirst());
+    public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params, MainWindow mainWin) throws Exception {
+        this.mainWin = mainWin;
+        setPadding(new Insets(10));
+        getStyleClass().add("channel-strip");
 
-		setSpacing(8);
-		setAlignment(Pos.CENTER);
+        setMinSize(0, 0);
+        setPrefSize(220, 420);
+        setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-		Label name = new Label(chainName.substring(chainName.indexOf(".") + 1));
+        Set<String> allClients = clients.getClientNames();
+        ArrayList<String> chainClients = new ArrayList<>();
+        for (String client : allClients) {
+            if (client.startsWith(chainName)) {
+                chainClients.add(client);
+            }
+        }
+        if (chainClients.isEmpty()) {
+            throw new Exception("No clients in chain: " + chainName);
+        }
+        chainClients.sort(Comparator.naturalOrder());
 
-		LevelMeter preMeter = new LevelMeter(firstClient, LevelMeter.Type.PRE);
-		preMeter.prefHeightProperty().bind(heightProperty().multiply(0.35));
-		preMeter.prefWidthProperty().bind(widthProperty().divide(3));
-		LevelMeter meter = new LevelMeter(lastClient);
-		meter.prefHeightProperty().bind(heightProperty().multiply(0.35));
-		meter.prefWidthProperty().bind(widthProperty().divide(3));
-		Slider fader = createFader(params);
+        for (String client : chainClients) {
+            if (client.endsWith("gain")) {
+                gainClient = (Gain) clients.get(client);
+            }
+            if (client.endsWith("compressor")) {
+                compClient = (Compressor) clients.get(client);
+            }
+            if (client.endsWith("eq")) {
+                eqClient = (ParametricEQ) clients.get(client);
+            }
+        }
+        lastClient = clients.get(chainClients.getLast());
+        firstClient = clients.get(chainClients.getFirst());
 
-		HBox meters = new HBox();
-		meters.getChildren().addAll(preMeter, meter, fader);
-		meters.setAlignment(Pos.CENTER);
+        name = new Label(chainName.substring(chainName.indexOf(".") + 1));
+        name.setAlignment(Pos.TOP_CENTER);
+        name.setMaxWidth(Double.MAX_VALUE);
 
-		Button mute = createMuteButton(params);
+        preMeter = new LevelMeter(firstClient, LevelMeter.Type.PRE);
+        postMeter = new LevelMeter(lastClient);
+        fader = createFader(params);
 
-		FFTGraph visGraph = new FFTGraph(lastClient, new Dimension2D(60, 60), 32);
-		visGraph.widthProperty().bind(widthProperty().subtract(20));
-		visGraph.heightProperty().bind(widthProperty().multiply(0.75f));
+        // 300x200 sets 3:2 pref aspect for any parent doing pref-size computations.
+        visGraph = new FFTGraph(lastClient, new Dimension2D(300, 200), 32);
 
-		visGraph.widthProperty().addListener((obs, oldV, newV) -> visGraph.render());
-		//visGraph.heightProperty().addListener((obs, oldV, newV) -> visGraph.render());
+        mute = createMuteButton(params);
+        buttons.add(mute);
 
-		getChildren().addAll(name, meters, visGraph, mute);
+        if (compClient != null) {
+            comp = createCompButton(params);
+            buttons.add(comp);
+        } else {
+            comp = null;
+        }
 
-		if (compClient != null) {
-			Button comp = createCompButton(params);
-			getChildren().add(comp);
-		}
+        if (eqClient != null) {
+            eq = createEQButton(params);
+            buttons.add(eq);
+        } else {
+            eq = null;
+        }
 
-		if (eqClient != null) {
-			Button eq = createEQButton(params);
-			getChildren().add(eq);
-		}
-	}
+        // Allow manual layout to shrink controls.
+        for (Button b : buttons) {
+            b.setMinSize(0, 0);
+            b.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        }
+        fader.setMinSize(0, 0);
+        fader.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-	private Slider createFader(ParameterRegistry params) {
-		
-		final float min = -60;
-		final float max = 6;
-		
+        getChildren().addAll(name, preMeter, postMeter, fader, visGraph);
+        getChildren().addAll(buttons);
+    }
 
-		ControlParameter<Float> gainParam = params.get(gainClient.toString() + ".gain");
-		
-		Slider slider = new Slider(min, max, gainParam.getValue());
-		//slider.setPrefHeight(200);
-		//slider.setPrefWidth(20);
-		slider.setOrientation(Orientation.VERTICAL);
-		gainParam.addListener(dB -> {
-			slider.adjustValue(dB);
-		});
+    private Slider createFader(ParameterRegistry params) {
+        final float min = -60;
+        final float max = 6;
 
-		slider.prefHeightProperty().bind(heightProperty().multiply(0.35));
+        ControlParameter<Float> gainParam = params.get(gainClient.toString() + ".gain");
 
-		slider.valueProperty().addListener((obs, o, n) -> {
+        Slider slider = new Slider(min, max, gainParam.getValue());
+        slider.setOrientation(javafx.geometry.Orientation.VERTICAL);
+        gainParam.addListener(slider::adjustValue);
 
-			float normalized = (n.floatValue() - min) / (max - min);
-			
-			gainParam.setNormalized(normalized);
+        slider.valueProperty().addListener((obs, o, n) -> {
+            float normalized = (n.floatValue() - min) / (max - min);
+            gainParam.setNormalized(normalized);
+        });
 
-		});
+        return slider;
+    }
 
-		return slider;
-	}
+    private Button createMuteButton(ParameterRegistry params) {
+        Button button = new Button("OFF");
+        button.getStyleClass().add("on-button");
 
-	private Button createMuteButton(ParameterRegistry params) {
-		
-		Button button = new Button("OFF");
+        ControlParameter<Boolean> on = params.get(lastClient.toString() + ".on");
+        on.addListener(state -> {
+            if (state) {
+                button.getStyleClass().add("active");
+                button.setText("ON");
+            } else {
+                button.getStyleClass().remove("active");
+                button.setText("OFF");
+            }
+        });
 
-		button.setPrefSize(60, 60);
-		button.getStyleClass().add("on-button");
+        button.setOnAction(_ -> on.setNormalized(on.getValue() ? 0 : 1));
+        return button;
+    }
 
-		ControlParameter<Boolean> on = params.get(lastClient.toString() + ".on");
-		on.addListener(state -> {
-			if (state) {
-				button.getStyleClass().add("active");
-				button.setText("ON");
-			} else {
-				button.getStyleClass().remove("active");
-				button.setText("OFF");
-			}
-		});
+    private Button createCompButton(ParameterRegistry params) {
+        Button button = new Button("Comp");
+        button.getStyleClass().add("comp-button");
+        button.setOnAction(_ -> mainWin.addOverlay(new CompressorPane(compClient, params)));
+        return button;
+    }
 
-		button.prefWidthProperty().bind(widthProperty().multiply(0.7));
-		button.prefHeightProperty().bind(button.prefWidthProperty());
+    private Button createEQButton(ParameterRegistry params) {
+        Button button = new Button("EQ");
+        button.getStyleClass().add("comp-button");
+        button.setOnAction(_ -> mainWin.addOverlay(new EQPane(eqClient, params)));
+        return button;
+    }
 
-		button.setOnAction(_ -> on.setNormalized(on.getValue() ? 0 : 1));
+    @Override
+    protected void layoutChildren() {
+        Insets in = getInsets();
+        double x0 = in.getLeft();
+        double y = in.getTop();
+        double innerW = Math.max(0, getWidth() - in.getLeft() - in.getRight());
+        double innerH = Math.max(0, getHeight() - in.getTop() - in.getBottom());
 
-		return button;
-	}
-	
-	private Button createCompButton(ParameterRegistry params) {
-		Button button = new Button("Comp");
-		
-		button.setPrefSize(60, 60);
-		button.getStyleClass().add("comp-button");
+        // Top aligned content, laid out sequentially.
+        double labelH = snapSizeY(name.prefHeight(innerW));
+        name.resizeRelocate(x0, y, innerW, labelH);
+        y += labelH + GAP;
 
-		button.setOnAction(e -> {
+        double metersH = clamp(innerH * METERS_HEIGHT_PCT, 0, Math.max(0, innerH - (labelH + GAP)));
+        layoutMeters(x0, y, innerW, metersH);
+        y += metersH + GAP;
 
-		    Stage stage = new Stage();
+        double remainingH = Math.max(0, in.getTop() + innerH - y);
+        if (remainingH <= 0) {
+            visGraph.resizeRelocate(x0, y, 0, 0);
+            layoutButtons(x0, y, innerW, 0);
+            return;
+        }
 
-		    CompressorPane pane =
-		        new CompressorPane(compClient, params);
+        int nButtons = buttons.size();
+        double buttonGapTotal = nButtons > 0 ? GAP * (nButtons - 1) : 0;
+        double interGap = nButtons > 0 ? GAP : 0;
 
-			Scene scene = new Scene(pane);
-			stage.setScene(scene);
-		    stage.setTitle("Compressor");
-		    stage.show();
-			scene.getStylesheets().add("style.css");
-		});
+        double buttonMaxH = nButtons > 0 ? Math.max(0, (remainingH - interGap - buttonGapTotal) / nButtons) : 0;
+        double desiredButton = innerW * BUTTON_WIDTH_PCT;
+        double buttonSize = clamp(Math.min(desiredButton, buttonMaxH), 0, innerW);
 
-		button.prefWidthProperty().bind(widthProperty().multiply(0.7));
-		button.prefHeightProperty().bind(button.prefWidthProperty());
+        double fftAvailH = Math.max(0, remainingH - interGap - (nButtons * buttonSize + buttonGapTotal));
+        layoutFft(x0, y, innerW, fftAvailH);
+        double fftH = visGraph.getHeight();
+        y += fftH;
+        if (nButtons > 0 && fftH > 0) {
+            y += GAP;
+        }
 
-		return button;
-	}
+        layoutButtons(x0, y, innerW, buttonSize);
+    }
 
-	private Button createEQButton(ParameterRegistry params) {
-		Button button = new Button("EQ");
+    private void layoutMeters(double x0, double y0, double w, double h) {
+        if (w <= 0 || h <= 0) {
+            preMeter.resizeRelocate(x0, y0, 0, 0);
+            postMeter.resizeRelocate(x0, y0, 0, 0);
+            fader.resizeRelocate(x0, y0, 0, 0);
+            return;
+        }
 
-		button.setPrefSize(60, 60);
-		button.getStyleClass().add("comp-button");
+        double faderW = clamp(w * 0.22, 18, w * 0.35);
+        double metersW = Math.max(0, w - faderW - 2 * GAP);
+        double meterW = metersW / 2.0;
 
-		button.setOnAction(e -> {
+        preMeter.resizeRelocate(x0, y0, meterW, h);
+        postMeter.resizeRelocate(x0 + meterW + GAP, y0, meterW, h);
+        fader.resizeRelocate(x0 + 2 * meterW + 2 * GAP, y0, faderW, h);
+    }
 
-			Stage stage = new Stage();
+    private void layoutFft(double x0, double y0, double w, double h) {
+        if (w <= 0 || h <= 0) {
+            visGraph.resizeRelocate(x0, y0, 0, 0);
+            return;
+        }
 
-			EQPane pane = new EQPane(eqClient, params);
+        // Largest 3:2 rectangle that fits in (w,h).
+        double maxWByH = h * FFT_ASPECT_W_OVER_H;
+        double fftW = Math.min(w, maxWByH);
+        double fftH = fftW / FFT_ASPECT_W_OVER_H;
+        double fftX = x0 + (w - fftW) / 2.0;
 
-			mainWin.addOverlay(pane);
+        visGraph.resizeRelocate(fftX, y0, fftW, fftH);
+    }
 
-			//Scene scene = new Scene(pane);
-			//stage.setScene(scene);
-			//stage.setTitle("EQ");
-			//stage.show();
-			//scene.getStylesheets().add("style.css");
-		});
+    private void layoutButtons(double x0, double y0, double w, double size) {
+        double y = y0;
+        for (Button b : buttons) {
+            if (w <= 0 || size <= 0) {
+                b.resizeRelocate(x0, y, 0, 0);
+                continue;
+            }
+            double x = x0 + (w - size) / 2.0;
+            b.resizeRelocate(x, y, size, size);
+            y += size + GAP;
+        }
+    }
 
-		button.prefWidthProperty().bind(widthProperty().multiply(0.7));
-		button.prefHeightProperty().bind(button.prefWidthProperty());
+    @Override
+    public boolean isResizable() {
+        return true;
+    }
 
-		return button;
-	}
+    @Override
+    protected double computeMinWidth(double height) {
+        return 0;
+    }
 
-	private static double dbToHeight(double db) {
+    @Override
+    protected double computeMinHeight(double width) {
+        return 0;
+    }
 
-		double min = -60;
-		double max = 0;
-
-		db = Math.max(min, Math.min(max, db));
-
-		double norm = (db - min) / (max - min);
-
-		return norm * METER_HEIGHT;
-	}
+    private static double clamp(double v, double min, double max) {
+        if (v < min) {
+            return min;
+        }
+        if (v > max) {
+            return max;
+        }
+        return v;
+    }
 }
+

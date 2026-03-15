@@ -26,8 +26,14 @@
   -fx-background-color: -fx-bg1;
 }
 
+.overlay {
+  -fx-background-radius: 16;
+  -fx-background-color: -fx-bg2;
+}
+
 .overlay-content {
-    -fx-background-radius: 8;
+  -fx-background-radius: 8;
+  -fx-background-color: -fx-bg1;
 }
 
 /* .page-nav-button { */
@@ -48,6 +54,3 @@
   -fx-background-color: -fx-bg-active;
 }
 
-.eq-pane {
-  -fx-background-color: -fx-bg1;
-}

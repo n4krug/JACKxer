@@ -26,13 +26,13 @@ public class ChannelPage extends GridPane {
 		setVgap(10);
 		setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-		ColumnConstraints cc = new ColumnConstraints();
-		cc.setPercentWidth(100.0 / chains.size());
-		cc.setHgrow(Priority.ALWAYS);
-		cc.setFillWidth(true);
-
+		double percent = 100.0 / chains.size();
 		for (int i = 0; i < chains.size(); i++) {
-			getColumnConstraints().add(cc);
+			ColumnConstraints col = new ColumnConstraints();
+			col.setPercentWidth(percent);
+			col.setHgrow(Priority.ALWAYS);
+			col.setFillWidth(true);
+			getColumnConstraints().add(col);
 		}
 
 		int i = 0;

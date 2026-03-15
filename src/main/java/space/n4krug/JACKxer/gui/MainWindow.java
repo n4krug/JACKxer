@@ -71,8 +71,9 @@ public class MainWindow extends BorderPane {
 		Button close = new Button("X");
 		pane.getChildren().addAll(content, close);
 		StackPane.setAlignment(close, Pos.TOP_RIGHT);
-		StackPane.setMargin(content, new Insets(60));
-		StackPane.setMargin(close, new Insets(50));
+		StackPane.setMargin(pane, new Insets(60));
+		StackPane.setMargin(content, new Insets(10));
+		StackPane.setMargin(close, new Insets(-10));
 		close.setPrefSize(60, 60);
 		close.setOnAction(e -> {
 			center.getChildren().remove(pane);
