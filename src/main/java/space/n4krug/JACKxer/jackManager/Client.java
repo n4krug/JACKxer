@@ -2,9 +2,7 @@ package space.n4krug.JACKxer.jackManager;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.List;
 
 import org.jaudiolibs.jnajack.Jack;
 import org.jaudiolibs.jnajack.JackClient;
@@ -71,36 +69,13 @@ public abstract class Client implements JackProcessCallback {
     public String toString() {
 		return name;
 	}
-	
-	public float getPeakLevel() {
-		return peakLevel;
-	}
 
-	public float getRmsLevel() {
-		return rmsLevel;
-	}
 	public float getPeakdB() {
 		return 20f * (float) Math.log10(peakLevel + 1e-9f);
 	}
 
-	public float getRmsdB() {
-		return 20f * (float) Math.log10(rmsLevel + 1e-9f);
-	}
-
-	public float getPrePeakLevel() {
-		return prePeakLevel;
-	}
-
-	public float getPreRmsLevel() {
-		return preRmsLevel;
-	}
-
 	public float getPrePeakdB() {
 		return 20f * (float) Math.log10(prePeakLevel + 1e-9f);
-	}
-
-	public float getPreRmsdB() {
-		return 20f * (float) Math.log10(preRmsLevel + 1e-9f);
 	}
 
 	protected FloatBuffer preProcess(FloatBuffer buf, int nframes) {
@@ -176,7 +151,7 @@ public abstract class Client implements JackProcessCallback {
 		}
 
 		for (int i = 0; i < inBufs.length; i++) {
-			preProcess(inBufs[i], frames);
+			inBufs[i] = preProcess(inBufs[i], frames);
 		}
 
 			 if (bypassed) {
