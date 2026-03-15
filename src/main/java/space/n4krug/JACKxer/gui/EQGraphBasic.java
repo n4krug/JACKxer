@@ -2,10 +2,11 @@ package space.n4krug.JACKxer.gui;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import space.n4krug.JACKxer.jackManager.Biquad;
 
-class EQGraphBasic extends Canvas {
+class EQGraphBasic extends Region {
 
     Biquad[] bands;
 
@@ -13,38 +14,111 @@ class EQGraphBasic extends Canvas {
     private double[] cos;
     private double[] sin;
 
-    EQGraphBasic(Biquad[] bands) {
-        super(400,200);
+    private final Canvas canvas;
+    private final double prefW;
+    private final double prefH;
+
+    private int lutWidth = 0;
+
+    EQGraphBasic(Biquad[] bands, double width, double height) {
+        this.prefW = Math.max(1, width);
+        this.prefH = Math.max(1, height);
+        this.canvas = new Canvas(prefW, prefH);
+        getChildren().add(canvas);
+
+        setMinSize(0, 0);
+        setPrefSize(prefW, prefH);
+        setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
         this.bands = bands;
 
-        int width = (int)getWidth();
-
-        freqs = new double[width];
-        cos  = new double[width];
-        sin  = new double[width];
-
-        double sr = 48000;
-
-        for (int x = 0; x < width; x++) {
-
-            double f = xToFreq(x);
-
-            freqs[x] = f;
-
-            double w = 2 * Math.PI * f / sr;
-
-            cos[x] = Math.cos(w);
-            sin[x] = Math.sin(w);
-        }
+        ensureLut((int) Math.round(prefW));
 
         rerender();
     }
 
+    @Override
+    protected void layoutChildren() {
+        double w = Math.max(0, getWidth());
+        double h = Math.max(0, getHeight());
+
+        boolean resized = false;
+        if (Math.abs(canvas.getWidth() - w) > 0.5) {
+            canvas.setWidth(w);
+            resized = true;
+        }
+        if (Math.abs(canvas.getHeight() - h) > 0.5) {
+            canvas.setHeight(h);
+            resized = true;
+        }
+
+        if (resized) {
+            ensureLut((int) Math.round(w));
+            rerender();
+        }
+    }
+
+    @Override
+    public boolean isResizable() {
+        return true;
+    }
+
+    @Override
+    protected double computeMinWidth(double height) {
+        return 0;
+    }
+
+    @Override
+    protected double computeMinHeight(double width) {
+        return 0;
+    }
+
+    @Override
+    protected double computePrefWidth(double height) {
+        return prefW;
+    }
+
+    @Override
+    protected double computePrefHeight(double width) {
+        return prefH;
+    }
+
+    private void ensureLut(int width) {
+        int w = Math.max(1, width);
+        if (w == lutWidth) {
+            return;
+        }
+        lutWidth = w;
+
+        freqs = new double[w];
+        cos = new double[w];
+        sin = new double[w];
+
+        double sr = 48000;
+
+        for (int x = 0; x < w; x++) {
+            double f = xToFreq(x, w);
+            freqs[x] = f;
+
+            double ww = 2 * Math.PI * f / sr;
+            cos[x] = Math.cos(ww);
+            sin[x] = Math.sin(ww);
+        }
+    }
+
     void rerender() {
 
-        GraphicsContext g = getGraphicsContext2D();
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
 
-        g.clearRect(0,0,getWidth(),getHeight());
+        ensureLut((int) Math.round(w));
+
+        GraphicsContext g = canvas.getGraphicsContext2D();
+
+        g.clearRect(0, 0, w, h);
 
         double prevX = 0;
         double prevY = response(20);
@@ -63,7 +137,7 @@ class EQGraphBasic extends Canvas {
                 g.setLineWidth(0.5);
             }
 
-            g.strokeLine(x, 0, x, getHeight());
+            g.strokeLine(x, 0, x, h);
         }
 
         g.setStroke(Color.BLACK);
@@ -86,12 +160,14 @@ class EQGraphBasic extends Canvas {
     }
 
     private double xToFreq(double x) {
+        return xToFreq(x, canvas.getWidth());
+    }
 
+    private static double xToFreq(double x, double width) {
+        double w = Math.max(1e-9, width);
         double min = Math.log10(20);
         double max = Math.log10(20000);
-
-        double t = x / getWidth();
-
+        double t = x / w;
         return Math.pow(10, min + t * (max - min));
     }
 
@@ -101,7 +177,7 @@ class EQGraphBasic extends Canvas {
 
         double t = (Math.log10(freq) - min) / (max - min);
 
-        return t * getWidth();
+        return t * canvas.getWidth();
     }
 
     private double response(double freq) {
@@ -156,7 +232,7 @@ class EQGraphBasic extends Canvas {
 
         double norm = (db-min)/(max-min);
 
-        return getHeight()*(1-norm);
+        return canvas.getHeight() * (1 - norm);
     }
 
     private double bandResponse(Biquad b, int i) {

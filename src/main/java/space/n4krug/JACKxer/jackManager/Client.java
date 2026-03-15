@@ -154,7 +154,7 @@ public abstract class Client implements JackProcessCallback {
 			inBufs[i] = preProcess(inBufs[i], frames);
 		}
 
-			 if (bypassed) {
+		if (bypassed) {
 
 			int n = Math.min(inBufs.length, outBufs.length);
 
