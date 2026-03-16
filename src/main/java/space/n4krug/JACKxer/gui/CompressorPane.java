@@ -1,11 +1,11 @@
 package space.n4krug.JACKxer.gui;
 
+import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeLineJoin;
@@ -108,22 +108,93 @@ public class CompressorPane extends GridPane {
 		LevelMeter inLevel = new LevelMeter(comp, LevelMeter.Type.PRE);
 		LevelMeter outLevel = new LevelMeter(comp, LevelMeter.Type.POST);
 
-		add(graph, 1, 0);
-		add(inLevel, 2, 0);
-		add(outLevel, 3, 0);
+		HBox graphLevels = new HBox(graph, inLevel, outLevel);
+
+		graphLevels.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+		HBox.setMargin(inLevel, new Insets(5));
+		HBox.setMargin(outLevel, new Insets(5));
+
+		setVgrow(graphLevels, Priority.ALWAYS);
+		setHgrow(graphLevels, Priority.ALWAYS);
+
+		add(graphLevels, 1, 0);
+		//add(inLevel, 2, 0);
+		//add(outLevel, 3, 0);
 	}
 
-	private class KneeGraph extends Canvas {
+	private class KneeGraph extends Region {
+		private final Canvas canvas;
+		private final double prefSize;
+
 		KneeGraph() {
-			super(200, 200);
+			this.prefSize = 200;
+			this.canvas = new Canvas(prefSize, prefSize);
+			getChildren().add(canvas);
+
+			setMinSize(0, 0);
+			setPrefSize(prefSize, prefSize);
+			setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
 			rerender();
 		}
 
-		void rerender() {
-			GraphicsContext g = getGraphicsContext2D();
+		@Override
+		protected void layoutChildren() {
+			double w = Math.max(0, getWidth());
+			double h = Math.max(0, getHeight());
 
-			double w = getWidth();
-			double h = getHeight();
+			double s = Math.min(w, h);
+			double x = (w - s) / 2.0;
+			double y = (h - s) / 2.0;
+
+			boolean resized = false;
+			if (Math.abs(canvas.getWidth() - s) > 0.5) {
+				canvas.setWidth(s);
+				resized = true;
+			}
+			if (Math.abs(canvas.getHeight() - s) > 0.5) {
+				canvas.setHeight(s);
+				resized = true;
+			}
+
+			canvas.relocate(x, y);
+
+			if (resized) {
+				rerender();
+			}
+		}
+
+		@Override
+		public boolean isResizable() {
+			return true;
+		}
+
+		@Override
+		protected double computeMinWidth(double height) {
+			return 0;
+		}
+
+		@Override
+		protected double computeMinHeight(double width) {
+			return 0;
+		}
+
+		@Override
+		protected double computePrefWidth(double height) {
+			return prefSize;
+		}
+
+		@Override
+		protected double computePrefHeight(double width) {
+			return prefSize;
+		}
+
+		void rerender() {
+			GraphicsContext g = canvas.getGraphicsContext2D();
+
+			double w = canvas.getWidth();
+			double h = canvas.getHeight();
 			g.clearRect(0, 0, w, h);
 
 			int wi = (int) Math.floor(w);
