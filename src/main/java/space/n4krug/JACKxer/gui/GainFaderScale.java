@@ -44,12 +44,12 @@ public class GainFaderScale extends Region {
         getChildren().add(slider);
 
         addDbMark(gainClient, "+6 dB", 6f);
+        addDbMark(gainClient, "+3 dB", 3f);
         addDbMark(gainClient, "0 dB", 0f);
         addDbMark(gainClient, "-5 dB", -5f);
-        addDbMark(gainClient, "-10 dB", -10f);
-        addDbMark(gainClient, "-20 dB", -20f);
-        addDbMark(gainClient, "-40 dB", -40f);
-        addDbMark(gainClient, "-60 dB", -60f);
+        addDbMark(gainClient, "-15 dB", -15f);
+        addDbMark(gainClient, "-30 dB", -30f);
+        addDbMark(gainClient, "-50 dB", -50f);
         addDbMark("-\u221e dB", 0f);
 
         preferredScaleWidth = dbMarks.stream()

@@ -144,7 +144,7 @@ public class ConfigParser {
 				eval = eval.and(c.getKey(), c.getValue());
 			}
 
-			String value = eval.evaluate().getNumberValue().toString();
+			String value = eval.evaluate().getNumberValue().toPlainString();
 
 			String replaced = before + value + after;
 
