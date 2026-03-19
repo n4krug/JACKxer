@@ -40,9 +40,6 @@ public class ChannelStrip extends Region {
     private final GainFaderScale fader;
     private final FFTGraph visGraph;
 
-    private final Button mute;
-    private final Button comp;
-    private final Button eq;
     private final List<Button> buttons = new ArrayList<>();
 
     public ChannelStrip(String chainName, ClientRegistry clients, ParameterRegistry params, MainWindow mainWin) throws Exception {
@@ -91,21 +88,20 @@ public class ChannelStrip extends Region {
         // 300x200 sets 3:2 pref aspect for any parent doing pref-size computations.
         visGraph = new FFTGraph(lastClient, new Dimension2D(300, 200), 32);
 
-        mute = createMuteButton(params);
+        Button solo = createSoloButton(params);
+        buttons.add(solo);
+
+        Button mute = createMuteButton(params);
         buttons.add(mute);
 
         if (compClient != null) {
-            comp = createCompButton(params);
+            Button comp = createCompButton(params);
             buttons.add(comp);
-        } else {
-            comp = null;
         }
 
         if (eqClient != null) {
-            eq = createEQButton(params);
+            Button eq = createEQButton(params);
             buttons.add(eq);
-        } else {
-            eq = null;
         }
 
         // Allow manual layout to shrink controls.
@@ -141,6 +137,23 @@ public class ChannelStrip extends Region {
         });
 
         button.setOnAction(_ -> on.setNormalized(on.getValue() ? 0 : 1));
+        return button;
+    }
+
+    private Button createSoloButton(ParameterRegistry params) {
+        Button button = new Button("SOLO");
+        button.getStyleClass().add("on-button");
+
+        ControlParameter<Boolean> solo = params.get(lastClient.toString() + ".solo");
+        solo.addListener(state -> {
+            if (state) {
+                button.getStyleClass().add("active");
+            } else {
+                button.getStyleClass().remove("active");
+            }
+        });
+
+        button.setOnAction(_ -> solo.setNormalized(solo.getValue() ? 0 : 1));
         return button;
     }
 

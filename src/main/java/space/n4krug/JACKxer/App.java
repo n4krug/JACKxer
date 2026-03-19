@@ -39,6 +39,8 @@ public class App extends Application {
 		MidiRouter midi = new MidiRouter();
 		MidiConfigLoader.loadAllAvailable(midi, params);
 
+		params.get("global.Solo.gain").setNormalized(0.75f);
+
 		Scene scene = new Scene(mainWin);
 		scene.getStylesheets().add("style.css");
 		stage.setScene(scene);

@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -35,6 +36,13 @@ public class MainWindow extends BorderPane {
 		this.setBottom(pageNav);
 		pageNav.getStyleClass().add("page-nav");
 		pageNav.setPadding(new Insets(10));
+		//Slider monitorGain = new Slider(0, 1, 0);
+		//ControlParameter<Float> soloParam = params.get("global.Solo.gain");
+		//soloParam.addListener(monitorGain::adjustValue);
+		//monitorGain.valueProperty().addListener((obs, o, v) -> {
+		//	soloParam.setNormalized(v.floatValue());
+		//});
+		//pageNav.getChildren().add(monitorGain);
 	}
 	
 	public void addPage(Pane page, String name) {
