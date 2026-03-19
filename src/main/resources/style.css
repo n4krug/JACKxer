@@ -18,11 +18,40 @@
   -fx-text-background-color: -fx-fg1;
 }
 
+.gain-fader-scale .slider {
+  -fx-padding: 8 0 8 0;
+}
+
+.gain-fader-scale .slider .track {
+  -fx-background-color: -fx-bg3;
+  -fx-background-radius: 999;
+}
+
+.gain-fader-scale .slider .thumb {
+  -fx-background-color: -fx-fg1;
+  -fx-background-radius: 999;
+}
+
+.gain-fader-db-label {
+  -fx-font-size: 10px;
+  -fx-text-fill: -fx-fg1;
+}
+
 .channel-page, .preview-page {
   -fx-background-color: -fx-bg2;
 }
 
 .page-nav {
+  -fx-background-color: -fx-bg1;
+}
+
+.overlay {
+  -fx-background-radius: 16;
+  -fx-background-color: -fx-bg2;
+}
+
+.overlay-content {
+  -fx-background-radius: 8;
   -fx-background-color: -fx-bg1;
 }
 
@@ -42,8 +71,4 @@
 
 .button.active {
   -fx-background-color: -fx-bg-active;
-}
-
-.eq-pane {
-  -fx-background-color: -fx-bg1;
 }

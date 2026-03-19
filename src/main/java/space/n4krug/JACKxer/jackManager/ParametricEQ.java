@@ -60,6 +60,8 @@ public class ParametricEQ extends Client {
             registry.register(name + ".band" + i + ".q", q);
             registry.register(name + ".band" + i + ".type", type);
         }
+
+        registry.get(name + ".bypass").setNormalized(1);
     }
 
     private static double normToFreq(double t) {

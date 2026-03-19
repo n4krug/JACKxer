@@ -2,11 +2,11 @@ package space.n4krug.JACKxer.gui;
 
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
 import space.n4krug.JACKxer.jackManager.Biquad;
@@ -23,12 +23,39 @@ public class EQPane extends GridPane {
         this.eq = eq;
         this.bands = eq.getBands();
 
-        EQGraphBasic graph = new EQGraphBasic(bands);
+        EQGraphBasic graph = new EQGraphBasic(bands, 400, 200);
         FFTGraph visGraph = new FFTGraph(eq, new Dimension2D(400, 200), 96);
         StackPane graphs = new StackPane();
         graphs.getChildren().addAll(graph, visGraph);
 
-        VBox controls = new VBox();
+        HBox controls = new HBox();
+
+        setVgrow(graphs, Priority.ALWAYS);
+        setHgrow(graphs, Priority.ALWAYS);
+
+        ControlParameter<Boolean> bypass = params.get(eq + ".bypass");
+        Button bypassButton = new Button("OFF");
+        if (!bypass.getValue()) {
+            bypassButton.getStyleClass().add("active");
+            bypassButton.setText("ON");
+        }
+        bypass.addListener(v -> {
+            if (!v) {
+                bypassButton.getStyleClass().add("active");
+                bypassButton.setText("ON");
+            } else {
+                bypassButton.getStyleClass().remove("active");
+                bypassButton.setText("OFF");
+            }
+        });
+        bypassButton.setOnAction(e -> {
+            bypass.setNormalized(bypass.getValue() ? 0 : 1);
+        });
+        bypassButton.setPrefSize(60, 60);
+
+        controls.getChildren().add(bypassButton);
+        GridPane.setMargin(bypassButton, new Insets(10));
+        GridPane.setValignment(bypassButton, VPos.BOTTOM);
 
         for (int i = 0; i < bands.length; i++) {
 
@@ -45,6 +72,9 @@ public class EQPane extends GridPane {
             Slider freqSlider = new Slider(0, 1, freqToNorm(freq.getValue()));
             Slider gainSlider = new Slider(-24, 24, gain.getValue());
             Slider qSlider = new Slider(0.3f, 10f, q.getValue());
+            freqSlider.setOrientation(javafx.geometry.Orientation.VERTICAL);
+            gainSlider.setOrientation(javafx.geometry.Orientation.VERTICAL);
+            qSlider.setOrientation(javafx.geometry.Orientation.VERTICAL);
 
             type.addListener(v -> {
                 graph.rerender();
@@ -84,12 +114,19 @@ public class EQPane extends GridPane {
                 q.setNormalized((b.floatValue() - min) / (max - min));
             });
 
-            controls.getChildren().addAll(typeComboBox, freqSlider, gainSlider, qSlider);
+            HBox sliders = new HBox();
+            sliders.getChildren().addAll(freqSlider,gainSlider,qSlider);
+
+            VBox control = new VBox();
+            control.getChildren().addAll(sliders, typeComboBox);
+
+            controls.getChildren().add(control);
         }
 
+
         add(graphs, 0, 0);
-        add(controls, 1, 0);
-        this.getStyleClass().add("eq-pane");
+        add(controls, 0, 1);
+        getStyleClass().add("eq-pane");
     }
 
     private static double freqToNorm(double f) {

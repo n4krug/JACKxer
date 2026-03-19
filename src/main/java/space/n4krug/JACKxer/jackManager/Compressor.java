@@ -64,6 +64,8 @@ public class Compressor extends Client {
         
         attackCoef = (float)Math.exp(-1.0 / (sampleRate * attack));
         releaseCoef = (float)Math.exp(-1.0 / (sampleRate * release));
+
+        registry.get(name + ".bypass").setNormalized(1);
     }
 
     public float getThresholdDb() {

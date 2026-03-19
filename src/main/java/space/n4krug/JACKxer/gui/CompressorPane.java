@@ -1,11 +1,14 @@
 package space.n4krug.JACKxer.gui;
 
+import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
 import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
 import space.n4krug.JACKxer.jackManager.Compressor;
@@ -105,59 +108,149 @@ public class CompressorPane extends GridPane {
 		LevelMeter inLevel = new LevelMeter(comp, LevelMeter.Type.PRE);
 		LevelMeter outLevel = new LevelMeter(comp, LevelMeter.Type.POST);
 
-		add(graph, 1, 0);
-		add(inLevel, 2, 0);
-		add(outLevel, 3, 0);
+		HBox graphLevels = new HBox(graph, inLevel, outLevel);
+
+		graphLevels.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+		HBox.setMargin(inLevel, new Insets(5));
+		HBox.setMargin(outLevel, new Insets(5));
+
+		setVgrow(graphLevels, Priority.ALWAYS);
+		setHgrow(graphLevels, Priority.ALWAYS);
+
+		add(graphLevels, 1, 0);
+		//add(inLevel, 2, 0);
+		//add(outLevel, 3, 0);
 	}
 
-	private class KneeGraph extends Canvas {
+	private class KneeGraph extends Region {
+		private final Canvas canvas;
+		private final double prefSize;
+
 		KneeGraph() {
-			super(200, 200);
+			this.prefSize = 200;
+			this.canvas = new Canvas(prefSize, prefSize);
+			getChildren().add(canvas);
+
+			setMinSize(0, 0);
+			setPrefSize(prefSize, prefSize);
+			setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
 			rerender();
 		}
 
-		void rerender() {
-			GraphicsContext g = getGraphicsContext2D();
+		@Override
+		protected void layoutChildren() {
+			double w = Math.max(0, getWidth());
+			double h = Math.max(0, getHeight());
 
-			g.clearRect(0, 0, this.getWidth(), this.getHeight());
+			double s = Math.min(w, h);
+			double x = (w - s) / 2.0;
+			double y = (h - s) / 2.0;
 
-			float[] prevPoint = new float[2];
-			float indB = mapTodB(0);
-			float outdB = compressorCurve(indB);
-			float out = mapFromdB(outdB);
-			for (int i = 1; i < 200; i++) {
-				prevPoint[0] = i - 1;
-				prevPoint[1] = out;
-				indB = mapTodB(i);
-				outdB = compressorCurve(indB);
-				out = mapFromdB(outdB);
+			boolean resized = false;
+			if (Math.abs(canvas.getWidth() - s) > 0.5) {
+				canvas.setWidth(s);
+				resized = true;
+			}
+			if (Math.abs(canvas.getHeight() - s) > 0.5) {
+				canvas.setHeight(s);
+				resized = true;
+			}
 
-				g.strokeLine(prevPoint[0], prevPoint[1], i, out);
+			canvas.relocate(x, y);
+
+			if (resized) {
+				rerender();
 			}
 		}
 
-		private float mapTodB(int in) {
-			return -60 * (200 - in) / 200;
+		@Override
+		public boolean isResizable() {
+			return true;
 		}
 
-		private float mapFromdB(float in) {
-			return in * 200 / -60;
+		@Override
+		protected double computeMinWidth(double height) {
+			return 0;
 		}
 
-		private float compressorCurve(float indB) {
-			final float threshold = comp.getThresholdDb();
-			final float makeupGain = 20f * (float) Math.log10(comp.getMakeupGain());
+		@Override
+		protected double computeMinHeight(double width) {
+			return 0;
+		}
+
+		@Override
+		protected double computePrefWidth(double height) {
+			return prefSize;
+		}
+
+		@Override
+		protected double computePrefHeight(double width) {
+			return prefSize;
+		}
+
+		void rerender() {
+			GraphicsContext g = canvas.getGraphicsContext2D();
+
+			double w = canvas.getWidth();
+			double h = canvas.getHeight();
+			g.clearRect(0, 0, w, h);
+
+			int wi = (int) Math.floor(w);
+			if (wi < 2 || h <= 0) {
+				return;
+			}
+
+			g.setStroke(Color.WHITE);
+			g.setLineWidth(2);
+			g.setLineCap(StrokeLineCap.ROUND);
+			g.setLineJoin(StrokeLineJoin.ROUND);
+
+			double minDb = -60.0;
+			double maxDb = 0.0;
+
+			double prevY = dbToY(compressorCurve(xToDb(0, wi, minDb, maxDb)), h, minDb, maxDb);
+
+			g.beginPath();
+			g.moveTo(0, prevY);
+
+			for (int x = 1; x < wi; x++) {
+				double inDb = xToDb(x, wi, minDb, maxDb);
+				double outDb = compressorCurve(inDb);
+				double y = dbToY(outDb, h, minDb, maxDb);
+				g.lineTo(x, y);
+			}
+
+			g.stroke();
+		}
+
+		private double xToDb(int x, int width, double minDb, double maxDb) {
+			int denom = Math.max(1, width - 1);
+			double t = (double) x / (double) denom;
+			return minDb + t * (maxDb - minDb);
+		}
+
+		private double dbToY(double db, double height, double minDb, double maxDb) {
+			double v = Math.max(minDb, Math.min(maxDb, db));
+			double t = (v - minDb) / (maxDb - minDb);
+			return height * (1.0 - t);
+		}
+
+		private double compressorCurve(double inDb) {
+			final double threshold = comp.getThresholdDb();
+			final double makeupGain = 20.0 * Math.log10(comp.getMakeupGain());
 //			System.out.println(makeupGain);
 //			System.out.println(threshold);
-			final float ratio = comp.getRatio();
+			final double ratio = comp.getRatio();
 //			System.out.println(ratio);
 //			System.out.println(indB);
-			if (indB <= threshold) {
-				return indB + makeupGain;
+			if (inDb <= threshold) {
+				return inDb + makeupGain;
 			}
 
 //			System.out.println("in:" + indB + ", thresh: " + threshold);
-			return threshold + (indB - threshold) / ratio + makeupGain;
+			return threshold + (inDb - threshold) / ratio + makeupGain;
 		}
 	}
 }

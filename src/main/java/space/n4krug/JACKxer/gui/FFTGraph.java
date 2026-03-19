@@ -5,6 +5,7 @@ import javafx.animation.AnimationTimer;
 import javafx.geometry.Dimension2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -14,7 +15,15 @@ import javafx.scene.shape.StrokeLineJoin;
 import org.jaudiolibs.jnajack.JackException;
 import space.n4krug.JACKxer.jackManager.Client;
 
-public class FFTGraph extends Canvas {
+/**
+ * Resizable FFT visualization.
+ * <p>
+ * This is implemented as a {@link Region} hosting a {@link Canvas} so parents can lay it out
+ * normally (Canvas itself does not participate in Region sizing APIs). This avoids feedback
+ * loops where a child's size is bound to the parent's width, making the parent's min/pref
+ * width "ratchet" upwards and preventing shrinking.
+ */
+public class FFTGraph extends Region {
 
     private static final int FFT_SIZE = 2048;
     private final int bands; // = 96;
@@ -31,9 +40,23 @@ public class FFTGraph extends Canvas {
 
     private final Client source;
 
+    private final Canvas canvas;
+    private final double prefW;
+    private final double prefH;
+    private final double aspect;
+
     public FFTGraph(Client source, Dimension2D size, int bands) {
 
-        super(size.getWidth(), size.getHeight());
+        this.prefW = Math.max(1, size.getWidth());
+        this.prefH = Math.max(1, size.getHeight());
+        this.aspect = prefH / prefW;
+        this.canvas = new Canvas(prefW, prefH);
+        getChildren().add(canvas);
+
+        setMinSize(0, 0);
+        setPrefSize(prefW, prefH);
+        setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
         this.bands = bands;
         bandFreq = new double[this.bands];
         bandMag = new float[this.bands];
@@ -80,6 +103,46 @@ public class FFTGraph extends Canvas {
         };
 
         timer.start();
+    }
+
+    @Override
+    protected void layoutChildren() {
+        double w = Math.max(0, getWidth());
+        double h = Math.max(0, getHeight());
+
+        // Keep the Canvas sized to the allocated Region size.
+        if (Math.abs(canvas.getWidth() - w) > 0.5) {
+            canvas.setWidth(w);
+        }
+        if (Math.abs(canvas.getHeight() - h) > 0.5) {
+            canvas.setHeight(h);
+        }
+    }
+
+    @Override
+    public boolean isResizable() {
+        return true;
+    }
+
+    @Override
+    protected double computeMinWidth(double height) {
+        return 0;
+    }
+
+    @Override
+    protected double computeMinHeight(double width) {
+        return 0;
+    }
+
+    @Override
+    protected double computePrefWidth(double height) {
+        return prefW;
+    }
+
+    @Override
+    protected double computePrefHeight(double width) {
+        double w = width > 0 ? width : prefW;
+        return Math.max(0, w * aspect);
     }
 
     private void updateFFT() {
@@ -148,9 +211,15 @@ public class FFTGraph extends Canvas {
 
     private void render() {
 
-        GraphicsContext g = getGraphicsContext2D();
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
 
-        g.clearRect(0,0,getWidth(),getHeight());
+        GraphicsContext g = canvas.getGraphicsContext2D();
+
+        g.clearRect(0, 0, w, h);
 
         //g.setStroke(Color.LIME);
 
@@ -174,7 +243,7 @@ public class FFTGraph extends Canvas {
         //}
 
         g.beginPath();
-        g.moveTo(0, getHeight());
+        g.moveTo(0, h);
 
         for (int b = 0; b < bands; b++) {
 
@@ -188,7 +257,7 @@ public class FFTGraph extends Canvas {
             g.lineTo(x, y);
         }
 
-        g.lineTo(getWidth(), getHeight());
+        g.lineTo(w, h);
         g.closePath();
 
         g.setFill(grad);
@@ -241,7 +310,7 @@ public class FFTGraph extends Canvas {
 
         double t = (Math.log10(freq) - min) / (max - min);
 
-        return t * getWidth();
+        return t * canvas.getWidth();
     }
 
     private double dbToY(double db) {
@@ -253,6 +322,6 @@ public class FFTGraph extends Canvas {
 
         double norm = (db-min)/(max-min);
 
-        return getHeight()*(1-norm);
+        return canvas.getHeight() * (1 - norm);
     }
 }
