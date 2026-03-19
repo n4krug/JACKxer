@@ -38,21 +38,12 @@ public class Gain extends Client {
 	}
 
 	private void setNormalizedGain(float norm) {
-		gain = (float) Math.pow(1.25*norm, 3.5);
-	}
-
-	public float getDBGain() {
-
-		if (gain < Math.pow(10, (double) -60 /20)){
-			return -Float.MAX_VALUE;
-		}
-
-		return (float) (20f*Math.log10(gain));
+		gain = (float) Math.pow((4f/3)*norm, 2.4);
 	}
 
 	public float dbToNormalized(float db) {
 		float norm = (float) Math.pow(10, db / 20);
 
-		return (float) (1/1.25) * (float) Math.pow(norm, 1/3.5);
+		return (3f/4) * (float) Math.pow(norm, 1/2.4);
 	}
 }

@@ -10,7 +10,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.layout.Region;
 import space.n4krug.JACKxer.control.ControlParameter;
 import space.n4krug.JACKxer.control.ParameterRegistry;
@@ -38,7 +37,7 @@ public class ChannelStrip extends Region {
     private final Label name;
     private final LevelMeter preMeter;
     private final LevelMeter postMeter;
-    private final Slider fader;
+    private final GainFaderScale fader;
     private final FFTGraph visGraph;
 
     private final Button mute;
@@ -121,23 +120,9 @@ public class ChannelStrip extends Region {
         getChildren().addAll(buttons);
     }
 
-    private Slider createFader(ParameterRegistry params) {
-        final float min = 0;
-        final float max = 1;
-
+    private GainFaderScale createFader(ParameterRegistry params) {
         ControlParameter<Float> gainParam = params.get(gainClient.toString() + ".gain");
-
-        Slider slider = new Slider(min, max, gainParam.getValue());
-        slider.setOrientation(javafx.geometry.Orientation.VERTICAL);
-        gainParam.addListener(slider::adjustValue);
-
-        slider.valueProperty().addListener((obs, o, n) -> {
-            //float normalized = (n.floatValue() - min) / (max - min);
-            //gainParam.setNormalized(normalized);
-            gainParam.setNormalized(n.floatValue());
-        });
-
-        return slider;
+        return new GainFaderScale(gainClient, gainParam);
     }
 
     private Button createMuteButton(ParameterRegistry params) {
@@ -224,7 +209,7 @@ public class ChannelStrip extends Region {
             return;
         }
 
-        double faderW = clamp(w * 0.22, 18, w * 0.35);
+        double faderW = clamp(fader.computeBlockWidth(w), 80, w * 0.60);
         double metersW = Math.max(0, w - faderW - 2 * GAP);
         double meterW = metersW / 2.0;
 
@@ -286,4 +271,3 @@ public class ChannelStrip extends Region {
         return v;
     }
 }
-
