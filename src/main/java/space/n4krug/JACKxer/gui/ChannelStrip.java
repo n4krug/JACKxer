@@ -122,8 +122,8 @@ public class ChannelStrip extends Region {
     }
 
     private Slider createFader(ParameterRegistry params) {
-        final float min = -60;
-        final float max = 6;
+        final float min = 0;
+        final float max = 1;
 
         ControlParameter<Float> gainParam = params.get(gainClient.toString() + ".gain");
 
@@ -132,8 +132,9 @@ public class ChannelStrip extends Region {
         gainParam.addListener(slider::adjustValue);
 
         slider.valueProperty().addListener((obs, o, n) -> {
-            float normalized = (n.floatValue() - min) / (max - min);
-            gainParam.setNormalized(normalized);
+            //float normalized = (n.floatValue() - min) / (max - min);
+            //gainParam.setNormalized(normalized);
+            gainParam.setNormalized(n.floatValue());
         });
 
         return slider;
