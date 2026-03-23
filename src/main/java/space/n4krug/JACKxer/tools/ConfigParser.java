@@ -169,7 +169,7 @@ public class ConfigParser {
 	//	return getChainNodes(nodes, chainName, Comparator.naturalOrder());
 	//}
 
-	public static SortedMap<String, List<String>> splitPages(List<String> lines) throws EvaluationException, ParseException {
+	public static LinkedHashMap<String, List<String>> splitPages(List<String> lines) throws EvaluationException, ParseException {
 		List<String> globalLines = new ArrayList<>();
 		for (String line : lines) {
 			if (line.startsWith("[")) {
@@ -179,7 +179,7 @@ public class ConfigParser {
 		}
 		Map<String, Integer> globCounters = parseParams("counter", globalLines);
 		Map<String, Integer> globVars = parseParams("var", globalLines);
-		SortedMap<String, List<String>> out = new TreeMap<>();
+		LinkedHashMap<String, List<String>> out = new LinkedHashMap<>();
 
 		List<String> pageNames = new ArrayList<>();
 		pageNames.add("global");

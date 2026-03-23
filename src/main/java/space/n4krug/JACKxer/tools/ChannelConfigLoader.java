@@ -34,7 +34,7 @@ public class ChannelConfigLoader {
 
 		List<String> allLines = Files.readAllLines(Path.of(CONFIG_LOCATION + file));
 
-		SortedMap<String, List<String>> pageMap = ConfigParser.splitPages(allLines);
+		LinkedHashMap<String, List<String>> pageMap = ConfigParser.splitPages(allLines);
 
 		Map<String, Integer> globVars = ConfigParser.parseParams("var", pageMap.get("global"));
 		Map<String, Integer> globCounters = ConfigParser.parseParams("counter", pageMap.get("global"));
@@ -56,16 +56,10 @@ public class ChannelConfigLoader {
 			counters.putAll(ConfigParser.parseParams("counter", lines));
 
 			chains.put(page.getKey(), ConfigParser.parseKeyword("chain", vars, counters, lines));
-//			if (!page.getKey().equals("global")) {
-//				List<StringPair> pageNodes = ConfigParser.parseKeyword("node", vars, counters, lines);
-//				for (StringPair node : pageNodes) {
-//					nodes.add(new StringPair(page.getKey() + "." + node.getKey(), node.getValue()));
-//				}
 			List<StringPair> pageNodes = ConfigParser.parseKeyword("node", vars, counters, lines);
 			for (StringPair node : pageNodes) {
 				nodes.put(page.getKey() + "." + node.getKey(), node.getValue());
 			}
-//			}
 			connections.addAll(ConfigParser.parseKeyword("connect", vars, counters, lines));
 
 			/*

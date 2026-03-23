@@ -173,9 +173,9 @@ public abstract class Client implements JackProcessCallback {
 
 		}
 
-		for (FloatBuffer out : outBufs) {
-			postProcess(out, frames);
-		}
+		//for (FloatBuffer out : outBufs) {
+			postProcess(outBufs[0], frames);
+		//}
 
 		return true;
 	}

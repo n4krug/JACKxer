@@ -10,21 +10,19 @@ import space.n4krug.JACKxer.control.ParameterRegistry;
 
 public class Gain extends Client {
 
-	/**
-	 * Simple linear gain stage.
-	 * <p>
-	 * Exposes {@code &lt;name&gt;.gain} as a dB parameter in the range {@code [-60..6]}.
-	 */
 	private float gain;
+	private boolean solo = false;
 
-	private final ControlParameter<Float> gainParam;
-	
-	public Gain(String name, ParameterRegistry registry) throws JackException {
-		super(name, new String[] { "in" }, new String[] { "out" }, registry);
-		gainParam = ControlParameter.range(0, 1, 0);
+    public Gain(String name, ParameterRegistry registry) throws JackException {
+		super(name, new String[] { "in" }, new String[] { "out", "solo" }, registry);
+        ControlParameter<Float> gainParam = ControlParameter.range(0, 1, 0);
 		setNormalizedGain(gainParam.getValue());
 		gainParam.addDirectListener(this::setNormalizedGain);
 		registry.register(name + ".gain", gainParam);
+
+		ControlParameter<Boolean> soloParam = ControlParameter.toggle(false);
+		soloParam.addDirectListener(v -> solo = v);
+		registry.register(name + ".solo", soloParam);
 	}
 
 	@Override
@@ -34,6 +32,12 @@ public class Gain extends Client {
 
 		for (int i = 0; i < nframes; i++) {
 			out.put(i, in.get(i) * gain);
+		}
+
+		FloatBuffer soloBuf = outBufs[1];
+
+		for (int i = 0; i < nframes; i++) {
+			soloBuf.put(i, solo ? in.get(i) : 0f);
 		}
 	}
 
